@@ -1,3 +1,2 @@
 include external/rl-tools/__init__.py
-recursive-include external/rl-tools/interface *
-recursive-include external/rl-tools/src *
+recursive-include external/rl-tools/include *
