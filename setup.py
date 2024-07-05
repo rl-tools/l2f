@@ -2,12 +2,27 @@ import sys
 from setuptools import setup, Extension
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 
+debug = False
+optimization = True
+
 # Define platform-specific compile and link arguments
-compile_args = {
-    'msvc': ['/O2', '/fp:fast'],
-    'unix': ['-Ofast', '-march=native'],
-    'macos': ['-Ofast', '-march=native', '-mmacosx-version-min=10.14'],
-}
+if optimization:
+    compile_args = {
+        'msvc': ['/O2', '/fp:fast'],
+        'unix': ['-Ofast', '-march=native'],
+        'macos': ['-Ofast', '-march=native', '-mmacosx-version-min=10.14'],
+    }
+else:
+    compile_args = {
+        'msvc': [],
+        'unix': [],
+        'macos': [],
+    }
+if debug:
+    compile_args['msvc'] += ['/Zi', '/Od', '/D_DEBUG']
+    compile_args['unix'] += ['-g', '-D_DEBUG']
+    compile_args['macos'] += ['-g', '-D_DEBUG']
+
 
 link_args = {
     'msvc': [],

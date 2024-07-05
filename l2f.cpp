@@ -1,6 +1,6 @@
 #include <rl_tools/operations/cpu.h>
 #include <rl_tools/rl/environments/l2f/parameters/default.h>
-#include <rl_tools/rl/environments/l2f/operations_generic.h>
+#include <rl_tools/rl/environments/l2f/operations_cpu.h>
 
 #ifdef RL_TOOLS_ENABLE_JSON
 // for loading the config
@@ -55,6 +55,14 @@ namespace static_parameter_builder{
 using ENVIRONMENT_SPEC = rl_tools::rl::environments::l2f::Specification<T, TI, static_parameter_builder::ENVIRONMENT_STATIC_PARAMETERS>;
 using ENVIRONMENT = rl_tools::rl::environments::Multirotor<ENVIRONMENT_SPEC>;
 
+struct Device{
+    DEVICE device;
+};
+
+struct Rng{
+    RNG rng;
+};
+
 struct Environment{
     ENVIRONMENT env;
 };
@@ -63,10 +71,13 @@ struct Parameters{
     ENVIRONMENT::Parameters parameters;
 };
 
+void initialize_rng(Device &device, Rng& rng, TI seed){
+    rng.rng = rlt::random::default_engine(typename DEVICE::SPEC::RANDOM{}, seed);
+}
 
-void init(DEVICE &device, Environment& env, Parameters& parameters){
-    rlt::malloc(device, env.env);
-    rlt::init(device, env.env, parameters.parameters);
+void initialize_environment(Device &device, Environment& env, Parameters& parameters){
+    rlt::malloc(device.device, env.env);
+    rlt::init(device.device, env.env, parameters.parameters);
 }
 
 
@@ -107,41 +118,77 @@ struct Observation{
 };
 
 #ifdef RL_TOOLS_ENABLE_JSON
-void load_config(DEVICE& device, ENVIRONMENT& env, std::string config_string){
+void load_config(Device& device, ENVIRONMENT& env, std::string config_string){
     nlohmann::json parameters_json = nlohmann::json::parse(config_string);
-    rlt::load_config(device, env.parameters, parameters_json);
+    rlt::load_config(device.device, env.parameters, parameters_json);
 }
 #endif
 
-T step(DEVICE& device, Environment& env, Parameters& parameters, State& state, Action action, State& next_state, RNG& rng){
+T step(Device& device, Environment& env, Parameters& parameters, State& state, Action action, State& next_state, Rng& rng){
     rlt::MatrixStatic<rlt::matrix::Specification<T, TI, 1, ENVIRONMENT::ACTION_DIM>> motor_commands;
     for(TI action_i=0; action_i < 4; action_i++){
         set(motor_commands, 0, action_i, action.motor_command[action_i]);
     }
-    T dt = rlt::step(device, env.env, parameters.parameters, state.state, motor_commands, next_state.state, rng);
+    T dt = rlt::step(device.device, env.env, parameters.parameters, state.state, motor_commands, next_state.state, rng.rng);
     sync(next_state, next_state.state);
     return dt;
 }
-void initial_parameters(DEVICE& device, Environment& env, Parameters& parameters){
-    rlt::initial_parameters(device, env.env, parameters.parameters);
+void initial_parameters(Device& device, Environment& env, Parameters& parameters){
+    rlt::initial_parameters(device.device, env.env, parameters.parameters);
 }
-void sample_initial_parameters(DEVICE& device, Environment& env, Parameters& parameters, RNG& rng){
-    rlt::sample_initial_parameters(device, env.env, parameters.parameters, rng);
+void sample_initial_parameters(Device& device, Environment& env, Parameters& parameters, Rng& rng){
+    rlt::sample_initial_parameters(device.device, env.env, parameters.parameters, rng.rng);
 }
-void initial_state(DEVICE& device, Environment& env, Parameters& parameters, State& state){
-    rlt::initial_state(device, env.env, parameters.parameters, state.state);
+void initial_state(Device& device, Environment& env, Parameters& parameters, State& state){
+    rlt::initial_state(device.device, env.env, parameters.parameters, state.state);
     sync(state, state.state);
 }
-void sample_initial_state(DEVICE& device, Environment& env, Parameters& parameters, State& state, RNG& rng){
-    rlt::sample_initial_state(device, env.env, parameters.parameters, state.state, rng);
+void sample_initial_state(Device& device, Environment& env, Parameters& parameters, State& state, Rng& rng){
+    rlt::sample_initial_state(device.device, env.env, parameters.parameters, state.state, rng.rng);
     sync(state, state.state);
 }
-void observe(DEVICE& device, Environment& env, Parameters& parameters, State& state, Observation& observation, RNG& rng){
+void observe(Device& device, Environment& env, Parameters& parameters, State& state, Observation& observation, Rng& rng){
     rlt::MatrixStatic<rlt::matrix::Specification<T, TI, 1, ENVIRONMENT::OBSERVATION_DIM>> observation_matrix;
-    rlt::observe(device, env.env, parameters.parameters, state.state, ENVIRONMENT::Observation{}, observation_matrix, rng);
+    rlt::observe(device.device, env.env, parameters.parameters, state.state, ENVIRONMENT::Observation{}, observation_matrix, rng.rng);
     for(TI observation_i=0; observation_i < ENVIRONMENT::OBSERVATION_DIM; observation_i++){
         observation.observation[observation_i] = get(observation_matrix, 0, observation_i);
     }
+}
+
+std::string parameters_to_json(Device& device, Environment& env, Parameters& parameters){
+    return rlt::json(device.device, env.env, parameters.parameters);
+}
+
+
+int test(){
+    Device device;
+    Environment env;
+    Parameters parameters;
+    Rng rng;
+    initialize_environment(device, env, parameters);
+    initialize_rng(device, rng, 0);
+
+    State state, next_state;
+    Action action;
+    Observation observation, next_observation;
+    sample_initial_parameters(device, env, parameters, rng);
+    sample_initial_state(device, env, parameters, state, rng);
+    for(TI action_i=0; action_i < 4; action_i++){
+        action.motor_command[action_i] = 0.0;
+    }
+    for(TI step_i=0; step_i < 100; step_i++){
+        std::cout << "step: " << step_i << " position: " << state.position[0] << " " << state.position[1] << " " << state.position[2] << std::endl;
+        step(device, env, parameters, state, action, next_state, rng);
+        state = next_state;
+    }
+    // observe(device, env, parameters, state, observation, rng);
+    // observe(device, env, parameters, next_state, next_observation, rng);
+    // for(TI observation_i=0; observation_i < ENVIRONMENT::OBSERVATION_DIM; observation_i++){
+    //     std::cout << observation.observation[observation_i] << " " << next_observation.observation[observation_i] << std::endl;
+    // }
+    std::string json = parameters_to_json(device, env, parameters);
+    std::cout << json << std::endl;
+    return 0;
 }
 
 class Calculator {
@@ -151,12 +198,13 @@ public:
     int subtract(int a, int b) { return a - b; }
 };
 
+
 #ifndef TEST
 PYBIND11_MODULE(l2f, m) {
     // Optional: m.doc() = "Documentation string for the module"; // Module documentation
-    py::class_<DEVICE>(m, "Device")
+    py::class_<Device>(m, "Device")
         .def(py::init<>());
-    py::class_<RNG>(m, "RNG")
+    py::class_<Rng>(m, "Rng")
         .def(py::init<>());
     py::class_<Environment>(m, "Environment")
         .def(py::init<>());
@@ -167,7 +215,8 @@ PYBIND11_MODULE(l2f, m) {
         .def_readwrite("position", &State::position)
         .def_readwrite("orientation", &State::orientation)
         .def_readwrite("linear_velocity", &State::linear_velocity)
-        .def_readwrite("angular_velocity", &State::angular_velocity);
+        .def_readwrite("angular_velocity", &State::angular_velocity)
+        .def_readwrite("rpm", &State::rpm);
     py::class_<Action>(m, "Action")
         .def(py::init<>())
         .def_readwrite("motor_command", &Action::motor_command);
@@ -176,39 +225,23 @@ PYBIND11_MODULE(l2f, m) {
         .def_readwrite("observation", &Observation::observation);
 
 
-    m.def("init", &init, "Init environement");
+    m.def("initialize_environment", &initialize_environment, "Init environement");
+    m.def("initialize_rng", &initialize_rng, "Init Rng");
     m.def("step", &step, "Simulate one step");
     m.def("initial_parameters", &initial_parameters, "Reset to default parameters");
     m.def("sample_initial_parameters", &sample_initial_parameters, "Reset to random parameters");
     m.def("initial_state", &initial_state, "Reset to default state");
     m.def("sample_initial_state", &sample_initial_state, "Reset to random state");
     m.def("observe", &observe, "Observe state");
+    m.def("parameters_to_json", &parameters_to_json, "Convert parameters to json");
+    m.def("test", &test, "Test");
 #ifdef RL_TOOLS_ENABLE_JSON
     m.def("load_config", &load_config, "Load config");
 #endif
 }
 #else
 int main(){
-    DEVICE device;
-    Environment env;
-    Parameters parameters;
-    init(device, env, parameters);
-
-    RNG rng = rlt::random::default_engine(typename DEVICE::SPEC::RANDOM{}, 0);
-    State state, next_state;
-    Action action;
-    Observation observation, next_observation;
-    sample_initial_parameters(device, env, parameters, rng);
-    sample_initial_state(device, env, parameters, state, rng);
-    for(TI action_i=0; action_i < 4; action_i++){
-        action.motor_command[action_i] = 0.5;
-    }
-    step(device, env, parameters, state, action, next_state, rng);
-    observe(device, env, parameters, state, observation, rng);
-    observe(device, env, parameters, next_state, next_observation, rng);
-    for(TI observation_i=0; observation_i < ENVIRONMENT::OBSERVATION_DIM; observation_i++){
-        std::cout << observation.observation[observation_i] << " " << next_observation.observation[observation_i] << std::endl;
-    }
+    test();
     return 0;
 }
 
