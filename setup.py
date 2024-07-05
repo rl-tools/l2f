@@ -30,6 +30,7 @@ ext_modules = [
     Pybind11Extension(
         "l2f",
         ["src/l2f.cpp"],  # Adjust the source file paths as necessary
+        include_dirs=["external/rl-tools/include"],
         extra_compile_args=compile_args['current'],
         extra_link_args=link_args['current'],
     ),
@@ -43,9 +44,4 @@ setup(
     author_email="jonas.eschmann@gmail.com",
     ext_modules=ext_modules,
     cmdclass={"build_ext": build_ext},
-    options={
-        'build': {
-            'build_base': 'build'  # This sets the build directory
-        }
-    }
 )
