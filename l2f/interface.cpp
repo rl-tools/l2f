@@ -200,7 +200,7 @@ public:
 
 
 #ifndef TEST
-PYBIND11_MODULE(l2f, m) {
+PYBIND11_MODULE(interface, m) {
     // Optional: m.doc() = "Documentation string for the module"; // Module documentation
     py::class_<Device>(m, "Device")
         .def(py::init<>());

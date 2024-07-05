@@ -1,5 +1,5 @@
 import sys
-from setuptools import setup, Extension
+from setuptools import setup, find_packages, Extension
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 
 debug = False
@@ -43,8 +43,8 @@ else:
 
 ext_modules = [
     Pybind11Extension(
-        "l2f",
-        ["l2f.cpp"],  # Adjust the source file paths as necessary
+        "l2f.interface",
+        ["l2f/interface.cpp"],  # Adjust the source file paths as necessary
         include_dirs=["external/rl-tools/include"],
         extra_compile_args=compile_args['current'],
         extra_link_args=link_args['current'],
@@ -57,6 +57,7 @@ setup(
     description="Python bindings for the L2F (Learning to Fly) Simulator",
     author="Jonas Eschmann",
     author_email="jonas.eschmann@gmail.com",
+    packages=find_packages(include=['l2f']),
     include_package_data=True,
     ext_modules=ext_modules,
     cmdclass={"build_ext": build_ext},
