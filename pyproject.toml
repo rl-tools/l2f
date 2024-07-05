@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools", "pybind11"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "l2f"
+version = "0.0.1"
+description = "Python bindings for the L2F (Learning to Fly) Simulator introduced in the paper `Learning to Fly in Seconds`"
+authors = [
+    { name = "Jonas Eschmann", email = "jonas.eschmann@gmail.com" }
+]
+
+[tool.setuptools]
+packages = ["l2f"]
+include_package_data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.extension]
+modules = [
+    { name = "l2f", sources = ["src/l2f_module.cpp"], include_dirs=["include"] }
+]
+
+[tool.pybind11]
+# Optional: specify the minimal required pybind11 version, e.g. "2.5.0"
+min_version = "2.5.0"
