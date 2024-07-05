@@ -57,6 +57,7 @@ setup(
     description="Python bindings for the L2F (Learning to Fly) Simulator",
     author="Jonas Eschmann",
     author_email="jonas.eschmann@gmail.com",
+    include_package_data=True,
     ext_modules=ext_modules,
     cmdclass={"build_ext": build_ext},
 )
