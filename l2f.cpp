@@ -158,9 +158,9 @@ PYBIND11_MODULE(l2f, m) {
         .def(py::init<>());
     py::class_<RNG>(m, "RNG")
         .def(py::init<>());
-    py::class_<Parameters>(m, "Parameters")
-        .def(py::init<>());
     py::class_<Environment>(m, "Environment")
+        .def(py::init<>());
+    py::class_<Parameters>(m, "Parameters")
         .def(py::init<>());
     py::class_<State>(m, "State")
         .def(py::init<>())
@@ -178,6 +178,8 @@ PYBIND11_MODULE(l2f, m) {
 
     m.def("init", &init, "Init environement");
     m.def("step", &step, "Simulate one step");
+    m.def("initial_parameters", &initial_parameters, "Reset to default parameters");
+    m.def("sample_initial_parameters", &sample_initial_parameters, "Reset to random parameters");
     m.def("initial_state", &initial_state, "Reset to default state");
     m.def("sample_initial_state", &sample_initial_state, "Reset to random state");
     m.def("observe", &observe, "Observe state");
@@ -188,9 +190,8 @@ PYBIND11_MODULE(l2f, m) {
 #else
 int main(){
     DEVICE device;
-    ENVIRONMENT env;
+    Environment env;
     Parameters parameters;
-    rlt::malloc(device, env);
     init(device, env, parameters);
 
     RNG rng = rlt::random::default_engine(typename DEVICE::SPEC::RANDOM{}, 0);

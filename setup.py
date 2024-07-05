@@ -29,7 +29,7 @@ else:
 ext_modules = [
     Pybind11Extension(
         "l2f",
-        ["src/l2f.cpp"],  # Adjust the source file paths as necessary
+        ["l2f.cpp"],  # Adjust the source file paths as necessary
         include_dirs=["external/rl-tools/include"],
         extra_compile_args=compile_args['current'],
         extra_link_args=link_args['current'],

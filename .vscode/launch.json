@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Example: Test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "examples/test.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}
