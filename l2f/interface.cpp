@@ -65,6 +65,9 @@ struct Rng{
 
 struct Environment{
     ENVIRONMENT env;
+    TI ACTION_DIM = ENVIRONMENT::ACTION_DIM;
+    TI OBSERVATION_DIM = ENVIRONMENT::OBSERVATION_DIM;
+    
 };
 
 struct Parameters{
@@ -203,15 +206,43 @@ public:
 PYBIND11_MODULE(interface, m) {
     // Optional: m.doc() = "Documentation string for the module"; // Module documentation
     py::class_<Device>(m, "Device")
-        .def(py::init<>());
+        .def(py::init<>())
+        .def("__copy__", [](const Device &self) {
+            return Device(self);
+        });
     py::class_<Rng>(m, "Rng")
-        .def(py::init<>());
+        .def(py::init<>())
+        .def("__copy__", [](const Rng &self) {
+            return Rng(self);
+        });
     py::class_<Environment>(m, "Environment")
-        .def(py::init<>());
+        .def(py::init<>())
+        .def("__copy__", [](const Environment &self) {
+            return Environment(self);
+        });
     py::class_<Parameters>(m, "Parameters")
-        .def(py::init<>());
+        .def(py::init<>())
+        .def("__copy__", [](const Parameters &self) {
+            return Parameters(self);
+        })
+        .def_readwrite("parameters", &Parameters::parameters);
+    py::class_<ENVIRONMENT::Parameters>(m, "ActualParameters")
+        .def(py::init<>())
+        .def("__copy__", [](const ENVIRONMENT::Parameters &self) {
+            return ENVIRONMENT::Parameters(self);
+        })
+        .def_readwrite("dynamics", &ENVIRONMENT::Parameters::dynamics);
+    py::class_<ENVIRONMENT::Parameters::Dynamics>(m, "DynamicsParameters")
+        .def(py::init<>())
+        .def("__copy__", [](const ENVIRONMENT::Parameters::Dynamics &self) {
+            return ENVIRONMENT::Parameters::Dynamics(self);
+        })
+        .def_readwrite("mass", &ENVIRONMENT::Parameters::Dynamics::mass);
     py::class_<State>(m, "State")
         .def(py::init<>())
+        .def("__copy__", [](const State &self) {
+            return State(self);
+        })
         .def_readwrite("position", &State::position)
         .def_readwrite("orientation", &State::orientation)
         .def_readwrite("linear_velocity", &State::linear_velocity)
@@ -219,9 +250,15 @@ PYBIND11_MODULE(interface, m) {
         .def_readwrite("rpm", &State::rpm);
     py::class_<Action>(m, "Action")
         .def(py::init<>())
+        .def("__copy__", [](const Action &self) {
+            return Action(self);
+        })
         .def_readwrite("motor_command", &Action::motor_command);
     py::class_<Observation>(m, "Observation")
         .def(py::init<>())
+        .def("__copy__", [](const Observation &self) {
+            return Observation(self);
+        })
         .def_readwrite("observation", &Observation::observation);
 
 
