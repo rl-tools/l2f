@@ -231,7 +231,8 @@ PYBIND11_MODULE(interface, m) {
         .def("__copy__", [](const ENVIRONMENT::Parameters &self) {
             return ENVIRONMENT::Parameters(self);
         })
-        .def_readwrite("dynamics", &ENVIRONMENT::Parameters::dynamics);
+        .def_readwrite("dynamics", &ENVIRONMENT::Parameters::dynamics)
+        .def_readwrite("integration", &ENVIRONMENT::Parameters::integration);
     py::class_<ENVIRONMENT::Parameters::Dynamics>(m, "DynamicsParameters")
         .def(py::init<>())
         .def("__copy__", [](const ENVIRONMENT::Parameters::Dynamics &self) {
@@ -320,6 +321,9 @@ PYBIND11_MODULE(interface, m) {
             }
         )
         .def_readwrite("motor_time_constant", &ENVIRONMENT::Parameters::Dynamics::motor_time_constant);
+    py::class_<ENVIRONMENT::Parameters::Integration>(m, "IntegrationParameters")
+        .def(py::init<>())
+        .def_readwrite("dt", &ENVIRONMENT::Parameters::Integration::dt);
     py::class_<State>(m, "State")
         .def(py::init<>())
         .def("__copy__", [](const State &self) {

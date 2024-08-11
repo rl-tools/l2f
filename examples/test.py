@@ -32,6 +32,7 @@ print(f"rotor_thrust_coefficients: {params.parameters.dynamics.rotor_thrust_coef
 print(f"J: {params.parameters.dynamics.J}")
 print(f"J_inv: {params.parameters.dynamics.J_inv}") 
 print(f"motor_time_constant: {params.parameters.dynamics.motor_time_constant}")
+print(f"integration dt: {params.parameters.integration.dt}")
 # sample_initial_state(device, env, params, state, rng)
 initial_state(device, env, params, state)
 trajectory = []
