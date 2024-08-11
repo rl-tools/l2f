@@ -25,8 +25,13 @@ initialize_rng(device, rng, 0)
 
 
 sample_initial_parameters(device, env, params, rng)
-params.parameters.dynamics.mass *= 1
+params.parameters.dynamics.mass *= 0.1
 print(parameters_to_json(device, env, params))
+print(f"rotor_positions: {params.parameters.dynamics.rotor_positions}")
+print(f"rotor_thrust_coefficients: {params.parameters.dynamics.rotor_thrust_coefficients}")
+print(f"J: {params.parameters.dynamics.J}")
+print(f"J_inv: {params.parameters.dynamics.J_inv}") 
+print(f"motor_time_constant: {params.parameters.dynamics.motor_time_constant}")
 # sample_initial_state(device, env, params, state, rng)
 initial_state(device, env, params, state)
 trajectory = []

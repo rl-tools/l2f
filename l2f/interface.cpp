@@ -237,7 +237,89 @@ PYBIND11_MODULE(interface, m) {
         .def("__copy__", [](const ENVIRONMENT::Parameters::Dynamics &self) {
             return ENVIRONMENT::Parameters::Dynamics(self);
         })
-        .def_readwrite("mass", &ENVIRONMENT::Parameters::Dynamics::mass);
+        .def_property("rotor_positions",
+            [](ENVIRONMENT::Parameters::Dynamics &self) -> std::array<std::array<T, 3>, ENVIRONMENT::Parameters::N> {
+                std::array<std::array<T, 3>, ENVIRONMENT::Parameters::N> result;
+                for (TI i = 0; i < ENVIRONMENT::Parameters::N; ++i) {
+                    std::copy(std::begin(self.rotor_positions[i]), std::end(self.rotor_positions[i]), result[i].begin());
+                }
+                return result;
+            },
+            [](ENVIRONMENT::Parameters::Dynamics &self, const std::array<std::array<T, 3>, ENVIRONMENT::Parameters::N> &new_data) {
+                for (TI i = 0; i < ENVIRONMENT::Parameters::N; ++i) {
+                    std::copy(new_data[i].begin(), new_data[i].end(), std::begin(self.rotor_positions[i]));
+                }
+            }
+        )
+        .def_property("rotor_thrust_directions",
+            [](ENVIRONMENT::Parameters::Dynamics &self) -> std::array<std::array<T, 3>, ENVIRONMENT::Parameters::N> {
+                std::array<std::array<T, 3>, ENVIRONMENT::Parameters::N> result;
+                for (TI i = 0; i < ENVIRONMENT::Parameters::N; ++i) {
+                    std::copy(std::begin(self.rotor_thrust_directions[i]), std::end(self.rotor_thrust_directions[i]), result[i].begin());
+                }
+                return result;
+            },
+            [](ENVIRONMENT::Parameters::Dynamics &self, const std::array<std::array<T, 3>, ENVIRONMENT::Parameters::N> &new_data) {
+                for (TI i = 0; i < ENVIRONMENT::Parameters::N; ++i) {
+                    std::copy(new_data[i].begin(), new_data[i].end(), std::begin(self.rotor_thrust_directions[i]));
+                }
+            }
+        )
+        .def_property("rotor_torque_directions",
+            [](ENVIRONMENT::Parameters::Dynamics &self) -> std::array<std::array<T, 3>, ENVIRONMENT::Parameters::N> {
+                std::array<std::array<T, 3>, ENVIRONMENT::Parameters::N> result;
+                for (TI i = 0; i < ENVIRONMENT::Parameters::N; ++i) {
+                    std::copy(std::begin(self.rotor_torque_directions[i]), std::end(self.rotor_torque_directions[i]), result[i].begin());
+                }
+                return result;
+            },
+            [](ENVIRONMENT::Parameters::Dynamics &self, const std::array<std::array<T, 3>, ENVIRONMENT::Parameters::N> &new_data) {
+                for (TI i = 0; i < ENVIRONMENT::Parameters::N; ++i) {
+                    std::copy(new_data[i].begin(), new_data[i].end(), std::begin(self.rotor_torque_directions[i]));
+                }
+            }
+        )
+        .def_property("rotor_thrust_coefficients",
+            [](ENVIRONMENT::Parameters::Dynamics &self) -> std::array<T, 3> {
+                std::array<T, 3> result;
+                std::copy(std::begin(self.rotor_thrust_coefficients), std::end(self.rotor_thrust_coefficients), result.begin());
+                return result;
+            },
+            [](ENVIRONMENT::Parameters::Dynamics &self, const std::array<T, 3> &new_data) {
+                std::copy(new_data.begin(), new_data.end(), std::begin(self.rotor_thrust_coefficients));
+            }
+        )
+        .def_readwrite("rotor_torque_constant", &ENVIRONMENT::Parameters::Dynamics::rotor_torque_constant)
+        .def_readwrite("mass", &ENVIRONMENT::Parameters::Dynamics::mass)
+        .def_property("J",
+            [](ENVIRONMENT::Parameters::Dynamics &self) -> std::array<std::array<T, 3>, 3> {
+                std::array<std::array<T, 3>, 3> result;
+                for (TI i = 0; i < 3; ++i) {
+                    std::copy(std::begin(self.J[i]), std::end(self.J[i]), result[i].begin());
+                }
+                return result;
+            },
+            [](ENVIRONMENT::Parameters::Dynamics &self, const std::array<std::array<T, 3>, 3> &new_data) {
+                for (TI i = 0; i < 3; ++i) {
+                    std::copy(new_data[i].begin(), new_data[i].end(), std::begin(self.J[i]));
+                }
+            }
+        )
+        .def_property("J_inv",
+            [](ENVIRONMENT::Parameters::Dynamics &self) -> std::array<std::array<T, 3>, 3> {
+                std::array<std::array<T, 3>, 3> result;
+                for (TI i = 0; i < 3; ++i) {
+                    std::copy(std::begin(self.J_inv[i]), std::end(self.J_inv[i]), result[i].begin());
+                }
+                return result;
+            },
+            [](ENVIRONMENT::Parameters::Dynamics &self, const std::array<std::array<T, 3>, 3> &new_data) {
+                for (TI i = 0; i < 3; ++i) {
+                    std::copy(new_data[i].begin(), new_data[i].end(), std::begin(self.J_inv[i]));
+                }
+            }
+        )
+        .def_readwrite("motor_time_constant", &ENVIRONMENT::Parameters::Dynamics::motor_time_constant);
     py::class_<State>(m, "State")
         .def(py::init<>())
         .def("__copy__", [](const State &self) {
