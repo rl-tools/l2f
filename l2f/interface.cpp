@@ -348,9 +348,6 @@ PYBIND11_MODULE(interface, m) {
     m.def("observe", &observe, "Observe state");
     m.def("parameters_to_json", &parameters_to_json, "Convert parameters to json");
     m.def("test", &test, "Test");
-#ifdef RL_TOOLS_ENABLE_JSON
-    m.def("load_config", &load_config, "Load config");
-#endif
 }
 #else
 int main(){
