@@ -2,12 +2,6 @@
 #include <rl_tools/rl/environments/l2f/parameters/default.h>
 #include <rl_tools/rl/environments/l2f/operations_cpu.h>
 
-#ifdef RL_TOOLS_ENABLE_JSON
-// for loading the config
-#include <nlohmann/json.hpp>
-#include <learning_to_fly/simulator/operations_cpu.h>
-#endif
-
 namespace rlt = rl_tools;
 
 #ifndef TEST
@@ -119,13 +113,6 @@ struct Action{
 struct Observation{
     std::array<T, ENVIRONMENT::OBSERVATION_DIM> observation;
 };
-
-#ifdef RL_TOOLS_ENABLE_JSON
-void load_config(Device& device, ENVIRONMENT& env, std::string config_string){
-    nlohmann::json parameters_json = nlohmann::json::parse(config_string);
-    rlt::load_config(device.device, env.parameters, parameters_json);
-}
-#endif
 
 T step(Device& device, Environment& env, Parameters& parameters, State& state, Action action, State& next_state, Rng& rng){
     rlt::Matrix<rlt::matrix::Specification<T, TI, 1, ENVIRONMENT::ACTION_DIM, false>> motor_commands;
@@ -328,6 +315,9 @@ PYBIND11_MODULE(interface, m) {
         .def(py::init<>())
         .def("__copy__", [](const State &self) {
             return State(self);
+        })
+        .def("assign", [](State &self, const State &other) {
+            self = other;
         })
         .def_readwrite("position", &State::position)
         .def_readwrite("orientation", &State::orientation)

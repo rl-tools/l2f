@@ -44,7 +44,7 @@ for step_i in range(100):
     print(state.position, state.orientation, state.linear_velocity, state.angular_velocity, state.rpm)
     print("next_step: ", step_i, " position", next_state.position, " orientation", next_state.orientation, " linear_velocity", next_state.linear_velocity, " angular_velocity", next_state.angular_velocity, " rpm", next_state.rpm)
     trajectory.append(copy.copy(state))
-    state = next_state
+    state.assign(next_state)
     if any(np.isnan(state.position)):
         sys.exit(1)
 
