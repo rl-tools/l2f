@@ -6,9 +6,6 @@
 namespace py = pybind11;
 #define L2F_VECTOR
 #ifdef L2F_VECTOR
-    #ifndef L2F_VECTOR_N_ENVIRONMENTS
-        #define L2F_VECTOR_N_ENVIRONMENTS 1024
-    #endif
 #include "vector.h"
 #include <pybind11/numpy.h>
 #endif
@@ -49,6 +46,8 @@ py::module_ vector_factory(py::module_ &m){
     vector.def("sample_initial_state", &vector::sample_initial_state<N_ENVIRONMENTS>, "Reset to random state");
     vector.def("step", &vector::step<N_ENVIRONMENTS>, "Simulate one step");
     vector.def("observe", &vector::observe<N_ENVIRONMENTS>, "Observe state");
+    vector.def("reward", &vector::reward<N_ENVIRONMENTS>, "Get reward");
+    vector.def("terminated", &vector::terminated<N_ENVIRONMENTS>, "Check if terminated");
     return vector;
 }
 
@@ -236,7 +235,22 @@ PYBIND11_MODULE(interface, m) {
     m.def("parameters_to_json", &parameters_to_json, "Convert parameters to json");
 
 #ifdef L2F_VECTOR
-    vector_factory<1>(m);
+    // vector_factory<1>(m);
+    // vector_factory<2>(m);
+    // vector_factory<4>(m);
+    // vector_factory<8>(m);
+    // vector_factory<16>(m);
+    // vector_factory<32>(m);
+    // vector_factory<64>(m);
+    // vector_factory<128>(m);
+    // vector_factory<256>(m);
+    // vector_factory<512>(m);
+    vector_factory<1024>(m);
+    // vector_factory<2048>(m);
+    // vector_factory<4096>(m);
+    // vector_factory<8192>(m);
+#ifdef L2F_VECTOR_N_ENVIRONMENTS
     vector_factory<L2F_VECTOR_N_ENVIRONMENTS>(m);
+#endif
 #endif
 }

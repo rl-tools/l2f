@@ -127,7 +127,7 @@ namespace vector{
 
         auto buf = actions.request();
         T *data = static_cast<T*>(buf.ptr);
-        rlt::Matrix<rlt::matrix::Specification<T, TI, 1, ENVIRONMENT::ACTION_DIM, true>> motor_commands = {data};
+        rlt::Matrix<rlt::matrix::Specification<T, TI, N_ENVIRONMENTS, ENVIRONMENT::ACTION_DIM, true>> motor_commands = {data};
         #pragma omp parallel for
         for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
             auto view = rlt::row(device, motor_commands, env_i);
@@ -182,11 +182,89 @@ namespace vector{
 
         auto buf = observations.request();
         T *data = static_cast<T*>(buf.ptr);
-        rlt::Matrix<rlt::matrix::Specification<T, TI, 1, ENVIRONMENT::Observation::DIM, true>> observation_matrix = {data};
+        rlt::Matrix<rlt::matrix::Specification<T, TI, N_ENVIRONMENTS, ENVIRONMENT::Observation::DIM, true>> observation_matrix = {data};
         #pragma omp parallel for
         for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
             auto view = rlt::row(device, observation_matrix, env_i);
             rlt::observe(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], ENVIRONMENT::Observation{}, view, rng.rngs[env_i]);
+        }
+    }
+    template <TI N_ENVIRONMENTS>
+    void reward(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, py::array actions, State<N_ENVIRONMENTS>& next_states, py::array rewards, Rng<N_ENVIRONMENTS>& rng){
+        static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "Expected float or double array");
+        if(!actions.dtype().is(py::dtype::of<T>())){
+            std::ostringstream oss;
+            std::string expected_type = std::is_same_v<T, float> ? "float" : "double";
+            oss << "Expected " << expected_type << " array, got " << actions.dtype().str();
+            throw std::runtime_error(oss.str());
+        }
+
+        if (actions.size() != N_ENVIRONMENTS * 4) {
+            std::ostringstream oss;
+            oss << "Expected " << (N_ENVIRONMENTS * 4) << " actions, got " << actions.size();
+            throw std::runtime_error(oss.str());
+        }
+
+        if (actions.ndim() != 2) {
+            std::ostringstream oss;
+            oss << "Expected 2D array (N_ENVIRONMENTS x ACTION_DIM), got " << actions.ndim() << "D";
+            throw std::runtime_error(oss.str());
+        }
+
+        auto shape = actions.shape();
+        if (shape[0] != N_ENVIRONMENTS) {
+            std::ostringstream oss;
+            oss << "Expected " << N_ENVIRONMENTS << " environments, got " << shape[0];
+            throw std::runtime_error(oss.str());
+        }
+
+        if (shape[1] != 4) {
+            std::ostringstream oss;
+            oss << "Expected 4 actions, got " << shape[1];
+            throw std::runtime_error(oss.str());
+        }
+
+        constexpr TI ACTION_SIZE = 4 * sizeof(T);
+        if (actions.strides()[0] != ACTION_SIZE){
+            std::ostringstream oss;
+            oss << "Expected stride " << ACTION_SIZE << ", got stride of " << actions.strides()[0];
+            throw std::runtime_error(oss.str());
+        }
+        if(!rewards.dtype().is(py::dtype::of<T>())){
+            std::ostringstream oss;
+            std::string expected_type = std::is_same_v<T, float> ? "float" : "double";
+            oss << "Expected " << expected_type << " array, got " << rewards.dtype().str();
+            throw std::runtime_error(oss.str());
+        }
+        if (rewards.size() != N_ENVIRONMENTS) {
+            std::ostringstream oss;
+            oss << "Expected " << N_ENVIRONMENTS
+                << " rewards, got " << rewards.size();
+            throw std::runtime_error(oss.str());
+        }
+
+        if (rewards.ndim() != 1) {
+            std::ostringstream oss;
+            oss << "Expected 1D array (N_ENVIRONMENTS,), got " 
+                << rewards.ndim() << "D";
+            throw std::runtime_error(oss.str());
+        }
+
+        auto rewards_shape = rewards.shape();
+        if (rewards_shape[0] != N_ENVIRONMENTS) {
+            std::ostringstream oss;
+            oss << "Expected " << N_ENVIRONMENTS 
+                << " environments, got " << rewards_shape[0];
+            throw std::runtime_error(oss.str());
+        }
+
+        auto buf = actions.request();
+        T *data = static_cast<T*>(buf.ptr);
+        rlt::Matrix<rlt::matrix::Specification<T, TI, N_ENVIRONMENTS, ENVIRONMENT::ACTION_DIM, true>> action_matrix = {data};
+        #pragma omp parallel for
+        for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
+            auto view = rlt::row(device, action_matrix, env_i);
+            rlt::reward(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], view, next_states.states[env_i], rng.rngs[env_i]);
         }
     }
     template <TI N_ENVIRONMENTS>
@@ -203,7 +281,7 @@ namespace vector{
 
         if (terminated_flags.ndim() != 1) {
             std::ostringstream oss;
-            oss << "Expected 2D array (N_ENVIRONMENTS), got " 
+            oss << "Expected 1D array (N_ENVIRONMENTS,), got " 
                 << terminated_flags.ndim() << "D";
             throw std::runtime_error(oss.str());
         }
