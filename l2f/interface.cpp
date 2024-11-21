@@ -6,13 +6,13 @@
 namespace py = pybind11;
 
 PYBIND11_MODULE(interface, m) {
-    // Optional: m.doc() = "Documentation string for the module"; // Module documentation
     py::class_<DEVICE>(m, "Device")
         .def(py::init<>());
     py::class_<RNG>(m, "Rng")
         .def(py::init<>());
     py::class_<ENVIRONMENT>(m, "Environment")
-        .def(py::init<>());
+        .def(py::init<>())
+        .def_property_readonly("OBSERVATION_DIM", [](const ENVIRONMENT &self) { return ENVIRONMENT::Observation::DIM; });
     py::class_<ENVIRONMENT::Parameters>(m, "Parameters")
         .def(py::init<>())
         .def("__copy__", [](const ENVIRONMENT::Parameters &self) {
@@ -170,6 +170,10 @@ PYBIND11_MODULE(interface, m) {
         }
     );
 
+    py::class_<Observation>(m, "Observation")
+        .def(py::init<>())
+        .def_property_readonly("DIM", [](const Observation &self) { return Observation::DIM; })
+        .def_readwrite("observation", &Observation::observation);
 
 
 

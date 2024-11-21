@@ -14,7 +14,9 @@ rng = Rng()
 env = Environment()
 params = Parameters()
 state = State()
+observation = Observation()
 next_state = State()
+observation = Observation()
 initialize_environment(device, env, params)
 initialize_rng(device, rng, 0)
 
@@ -45,6 +47,7 @@ for step_i in range(100):
     if any(np.isnan(state.position)):
         sys.exit(1)
 
+observe(device, env, params, state, observation, rng)
 
 
 plt.plot([s.position[2] for s in trajectory])

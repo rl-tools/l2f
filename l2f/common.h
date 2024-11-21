@@ -47,6 +47,11 @@ namespace static_parameter_builder{
 using ENVIRONMENT_SPEC = rl_tools::rl::environments::l2f::Specification<T, TI, static_parameter_builder::ENVIRONMENT_STATIC_PARAMETERS>;
 using ENVIRONMENT = rl_tools::rl::environments::Multirotor<ENVIRONMENT_SPEC>;
 
+struct Observation{
+    static constexpr TI DIM = ENVIRONMENT::Observation::DIM;
+    std::array<T, DIM> observation;
+};
+
 void initialize_rng(DEVICE &device, RNG& rng, TI seed){
     rng = rlt::random::default_engine(typename DEVICE::SPEC::RANDOM{}, seed);
 }
@@ -76,11 +81,11 @@ void initial_state(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& pa
 void sample_initial_state(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters, ENVIRONMENT::State& state, RNG& rng){
     rlt::sample_initial_state(device, env, parameters, state, rng);
 }
-void observe(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters, ENVIRONMENT::State& state, std::array<T, ENVIRONMENT::Observation::DIM>& observation, RNG& rng){
+void observe(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters, ENVIRONMENT::State& state, Observation& observation, RNG& rng){
     rlt::Matrix<rlt::matrix::Specification<T, TI, 1, ENVIRONMENT::OBSERVATION_DIM, false>> observation_matrix;
     rlt::observe(device, env, parameters, state, ENVIRONMENT::Observation{}, observation_matrix, rng);
     for(TI observation_i=0; observation_i < ENVIRONMENT::OBSERVATION_DIM; observation_i++){
-        observation[observation_i] = get(observation_matrix, 0, observation_i);
+        observation.observation[observation_i] = get(observation_matrix, 0, observation_i);
     }
 }
 
