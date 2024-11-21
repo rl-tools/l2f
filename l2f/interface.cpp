@@ -4,6 +4,14 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 namespace py = pybind11;
+#define VECTOR
+#ifdef VECTOR
+    #ifndef VECTOR_N_ENVIRONMENTS
+        #define VECTOR_N_ENVIRONMENTS 1
+    #endif
+#include "vector.h"
+#include <pybind11/numpy.h>
+#endif
 
 PYBIND11_MODULE(interface, m) {
     py::class_<DEVICE>(m, "Device")
@@ -186,4 +194,31 @@ PYBIND11_MODULE(interface, m) {
     m.def("sample_initial_state", &sample_initial_state, "Reset to random state");
     m.def("observe", &observe, "Observe state");
     m.def("parameters_to_json", &parameters_to_json, "Convert parameters to json");
+
+#ifdef VECTOR
+    py::module_ vector = m.def_submodule("vector");
+    vector.def("initialize_environment", &vector::initialize_environment<VECTOR_N_ENVIRONMENTS>, "Init environement");
+    vector.def("step", &vector::step<VECTOR_N_ENVIRONMENTS>, "Simulate one step");
+    py::class_<vector::Environment<VECTOR_N_ENVIRONMENTS>>(vector, "Environment")
+        .def(py::init<>())
+        .def_property_readonly("OBSERVATION_DIM", [](const vector::Environment<VECTOR_N_ENVIRONMENTS> &self) { return ENVIRONMENT::Observation::DIM; })
+        .def_property_readonly("N_ENVIRONMENTS", [](const vector::Environment<VECTOR_N_ENVIRONMENTS> &self) { return vector::Environment<VECTOR_N_ENVIRONMENTS>::N_ENVIRONMENTS; })
+        .def_property_readonly("ACTION_DIM", [](const vector::Environment<VECTOR_N_ENVIRONMENTS> &self) { return ENVIRONMENT::ACTION_DIM; })
+        .def_readwrite("environments", &vector::Environment<VECTOR_N_ENVIRONMENTS>::environments);
+    py::class_<vector::Parameters<VECTOR_N_ENVIRONMENTS>>(vector, "Parameters")
+        .def(py::init<>())
+        .def_readwrite("parameters", &vector::Parameters<VECTOR_N_ENVIRONMENTS>::parameters);
+    py::class_<vector::State<VECTOR_N_ENVIRONMENTS>>(vector, "State")
+        .def(py::init<>())
+        .def("__copy__", [](const vector::State<VECTOR_N_ENVIRONMENTS> &self) {
+            return vector::State<VECTOR_N_ENVIRONMENTS>(self);
+        })
+        .def_readwrite("states", &vector::State<VECTOR_N_ENVIRONMENTS>::states);
+    vector.def("initial_parameters", &vector::initial_parameters<VECTOR_N_ENVIRONMENTS>, "Reset to default parameters");
+    vector.def("sample_initial_parameters", &vector::sample_initial_parameters<VECTOR_N_ENVIRONMENTS>, "Reset to random parameters");
+    vector.def("initial_state", &vector::initial_state<VECTOR_N_ENVIRONMENTS>, "Reset to default state");
+    vector.def("sample_initial_state", &vector::sample_initial_state<VECTOR_N_ENVIRONMENTS>, "Reset to random state");
+    vector.def("step", &vector::step<VECTOR_N_ENVIRONMENTS>, "Simulate one step");
+    vector.def("observe", &vector::observe<VECTOR_N_ENVIRONMENTS>, "Observe state");
+#endif
 }

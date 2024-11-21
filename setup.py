@@ -9,7 +9,7 @@ optimization = True
 if optimization:
     compile_args = {
         'msvc': ['/O2', '/fp:fast'],
-        'unix': ['-Ofast', '-march=native'],
+        'unix': ['-Ofast', '-march=native', '-fmax-errors=1'],
         'macos': ['-Ofast', '-march=native', '-mmacosx-version-min=10.14'],
     }
 else:

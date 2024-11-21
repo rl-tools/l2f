@@ -60,15 +60,6 @@ void initialize_environment(DEVICE &device, ENVIRONMENT& env){
     rlt::malloc(device, env);
     rlt::init(device, env);
 }
-T step(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters, ENVIRONMENT::State& state, std::array<T, 4> action, ENVIRONMENT::State& next_state, RNG& rng){
-    rlt::Matrix<rlt::matrix::Specification<T, TI, 1, ENVIRONMENT::ACTION_DIM, false>> motor_commands;
-    for(TI action_i=0; action_i < 4; action_i++){
-        set(motor_commands, 0, action_i, action[action_i]);
-    }
-    T dt = rlt::step(device, env, parameters, state, motor_commands, next_state, rng);
-    return dt;
-}
-
 void initial_parameters(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters){
     rlt::initial_parameters(device, env, parameters);
 }
@@ -81,6 +72,15 @@ void initial_state(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& pa
 void sample_initial_state(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters, ENVIRONMENT::State& state, RNG& rng){
     rlt::sample_initial_state(device, env, parameters, state, rng);
 }
+T step(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters, ENVIRONMENT::State& state, std::array<T, 4> action, ENVIRONMENT::State& next_state, RNG& rng){
+    rlt::Matrix<rlt::matrix::Specification<T, TI, 1, ENVIRONMENT::ACTION_DIM, false>> motor_commands;
+    for(TI action_i=0; action_i < 4; action_i++){
+        set(motor_commands, 0, action_i, action[action_i]);
+    }
+    T dt = rlt::step(device, env, parameters, state, motor_commands, next_state, rng);
+    return dt;
+}
+
 void observe(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters, ENVIRONMENT::State& state, Observation& observation, RNG& rng){
     rlt::Matrix<rlt::matrix::Specification<T, TI, 1, ENVIRONMENT::OBSERVATION_DIM, false>> observation_matrix;
     rlt::observe(device, env, parameters, state, ENVIRONMENT::Observation{}, observation_matrix, rng);
