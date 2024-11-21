@@ -56,11 +56,10 @@ void initialize_rng(DEVICE &device, RNG& rng, TI seed){
     rng = rlt::random::default_engine(typename DEVICE::SPEC::RANDOM{}, seed);
 }
 
-void initialize_environment(DEVICE &device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters){
+void initialize_environment(DEVICE &device, ENVIRONMENT& env){
     rlt::malloc(device, env);
     rlt::init(device, env);
 }
-
 T step(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters, ENVIRONMENT::State& state, std::array<T, 4> action, ENVIRONMENT::State& next_state, RNG& rng){
     rlt::Matrix<rlt::matrix::Specification<T, TI, 1, ENVIRONMENT::ACTION_DIM, false>> motor_commands;
     for(TI action_i=0; action_i < 4; action_i++){
@@ -69,6 +68,7 @@ T step(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters, EN
     T dt = rlt::step(device, env, parameters, state, motor_commands, next_state, rng);
     return dt;
 }
+
 void initial_parameters(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters){
     rlt::initial_parameters(device, env, parameters);
 }

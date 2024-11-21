@@ -5,7 +5,7 @@ int test(){
     ENVIRONMENT env;
     ENVIRONMENT::Parameters parameters;
     RNG rng;
-    initialize_environment(device, env, parameters);
+    initialize_environment(device, env);
     initialize_rng(device, rng, 0);
 
     ENVIRONMENT::State state, next_state;
