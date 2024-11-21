@@ -38,18 +38,10 @@ py::module_ vector_factory(py::module_ &m){
             return vector::State<N_ENVIRONMENTS>(self);
         })
         .def_readwrite("states", &vector::State<N_ENVIRONMENTS>::states);
-    // py::class_<vector::PAD<ENVIRONMENT>, ENVIRONMENT>(vector, "Environment")
-    //     .def(py::init<>())
-    //     .def(py::init<ENVIRONMENT>());
-    // py::class_<vector::PAD<ENVIRONMENT::Parameters>, ENVIRONMENT::Parameters>(vector, "Parameters")
-    //     .def(py::init<>())
-    //     .def(py::init<ENVIRONMENT::Parameters>());
-    // py::class_<vector::PAD<ENVIRONMENT::State>, ENVIRONMENT::State>(vector, "State")
-    //     .def(py::init<>())
-    //     .def(py::init<ENVIRONMENT::State>())
-    //     .def("get_pointer", [](vector::PAD<ENVIRONMENT::State> &self) {
-    //         return reinterpret_cast<uintptr_t>(&self);
-    //     }, "Get the pointer address of the object");
+    py::class_<vector::Rng<N_ENVIRONMENTS>>(vector, "VectorRng")
+        .def(py::init<>())
+        .def_readwrite("rngs", &vector::Rng<N_ENVIRONMENTS>::rngs);
+    vector.def("initialize_rng", &vector::initialize_rng<N_ENVIRONMENTS>, "Init rng");
 
     vector.def("initial_parameters", &vector::initial_parameters<N_ENVIRONMENTS>, "Reset to default parameters");
     vector.def("sample_initial_parameters", &vector::sample_initial_parameters<N_ENVIRONMENTS>, "Reset to random parameters");

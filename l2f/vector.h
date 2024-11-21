@@ -11,16 +11,11 @@
 #endif
 
 namespace vector{
-    // template <typename T>
-    // struct PAD: T{
-    //     static constexpr TI PADDING = L2F_CACHE_LINE_SIZE - (sizeof(T) % L2F_CACHE_LINE_SIZE);
-    //     char padding[PADDING];
-    // };
-    // static_assert(sizeof(PAD<ENVIRONMENT>) % L2F_CACHE_LINE_SIZE == 0, "Padded ENVIRONMENT is not cache aligned");
-    // static_assert(sizeof(PAD<ENVIRONMENT::Parameters>) % L2F_CACHE_LINE_SIZE == 0, "Padded ENVIRONMENT::Parameters is not cache aligned");
-    // static_assert(sizeof(PAD<ENVIRONMENT::State>) % L2F_CACHE_LINE_SIZE == 0, "Padded ENVIRONMENT::State is not cache aligned");
-
-
+    template <TI T_N_ENVIRONMENTS>
+    struct Rng{
+        static constexpr TI N_ENVIRONMENTS = T_N_ENVIRONMENTS;
+        alignas(L2F_CACHE_LINE_SIZE) std::array<RNG, N_ENVIRONMENTS> rngs;
+    };
     template <TI T_N_ENVIRONMENTS>
     struct Environment{
         static constexpr TI N_ENVIRONMENTS = T_N_ENVIRONMENTS;
@@ -39,6 +34,13 @@ namespace vector{
         static constexpr TI N_ENVIRONMENTS = T_N_ENVIRONMENTS;
         alignas(L2F_CACHE_LINE_SIZE) std::array<ENVIRONMENT::State, N_ENVIRONMENTS> states;
     };
+    template <TI N_ENVIRONMENTS>
+    void initialize_rng(DEVICE &device, Rng<N_ENVIRONMENTS>& rng, TI seed){
+        #pragma omp parallel for
+        for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
+            rng.rngs[env_i] = rlt::random::default_engine(typename DEVICE::SPEC::RANDOM{}, seed + env_i);
+        }
+    }
 
     template <TI N_ENVIRONMENTS>
     void initialize_environment(DEVICE &device, Environment<N_ENVIRONMENTS>& env){
@@ -58,10 +60,10 @@ namespace vector{
     }
 
     template <TI N_ENVIRONMENTS>
-    void sample_initial_parameters(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, RNG& rng){
+    void sample_initial_parameters(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, Rng<N_ENVIRONMENTS>& rng){
         #pragma omp parallel for
         for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
-            rlt::sample_initial_parameters(device, env.environments[env_i], parameters.parameters[env_i], rng);
+            rlt::sample_initial_parameters(device, env.environments[env_i], parameters.parameters[env_i], rng.rngs[env_i]);
         }
     }
 
@@ -74,15 +76,15 @@ namespace vector{
     }
 
     template <TI N_ENVIRONMENTS>
-    void sample_initial_state(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, RNG& rng){
+    void sample_initial_state(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, Rng<N_ENVIRONMENTS>& rng){
         #pragma omp parallel for
         for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
-            rlt::sample_initial_state(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], rng);
+            rlt::sample_initial_state(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], rng.rngs[env_i]);
         }
     }
 
     template <TI N_ENVIRONMENTS>
-    void step(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, py::array actions, State<N_ENVIRONMENTS>& next_states, RNG& rng){
+    void step(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, py::array actions, State<N_ENVIRONMENTS>& next_states, Rng<N_ENVIRONMENTS>& rng){
         static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "Expected float or double array");
         if(!actions.dtype().is(py::dtype::of<T>())){
             std::ostringstream oss;
@@ -129,12 +131,12 @@ namespace vector{
         #pragma omp parallel for
         for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
             auto view = rlt::row(device, motor_commands, env_i);
-            rlt::step(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], view, next_states.states[env_i], rng);
+            rlt::step(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], view, next_states.states[env_i], rng.rngs[env_i]);
         }
     }
 
     template <TI N_ENVIRONMENTS>
-    void observe(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, py::array observations, RNG& rng){
+    void observe(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, py::array observations, Rng<N_ENVIRONMENTS>& rng){
         static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "Expected float or double array");
         if(!observations.dtype().is(py::dtype::of<T>())){
             std::ostringstream oss;
@@ -184,7 +186,41 @@ namespace vector{
         #pragma omp parallel for
         for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
             auto view = rlt::row(device, observation_matrix, env_i);
-            rlt::observe(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], ENVIRONMENT::Observation{}, view, rng);
+            rlt::observe(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], ENVIRONMENT::Observation{}, view, rng.rngs[env_i]);
+        }
+    }
+    template <TI N_ENVIRONMENTS>
+    void terminated(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, py::array_t<bool> terminated_flags, Rng<N_ENVIRONMENTS>& rng){
+        if(!terminated_flags.dtype().is(py::dtype::of<bool>())){
+            throw std::runtime_error("Expected bool array");
+        }
+        if (terminated_flags.size() != N_ENVIRONMENTS) {
+            std::ostringstream oss;
+            oss << "Expected " << (N_ENVIRONMENTS)
+                << " terminated_flags, got " << terminated_flags.size();
+            throw std::runtime_error(oss.str());
+        }
+
+        if (terminated_flags.ndim() != 1) {
+            std::ostringstream oss;
+            oss << "Expected 2D array (N_ENVIRONMENTS), got " 
+                << terminated_flags.ndim() << "D";
+            throw std::runtime_error(oss.str());
+        }
+
+        auto shape = terminated_flags.shape();
+        if (shape[0] != N_ENVIRONMENTS) {
+            std::ostringstream oss;
+            oss << "Expected " << N_ENVIRONMENTS 
+                << " environments, got " << shape[0];
+            throw std::runtime_error(oss.str());
+        }
+
+        auto mutable_terminated_flags = terminated_flags.mutable_unchecked<1>();
+        #pragma omp parallel for
+        for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
+            bool terminated_flag_env = rlt::terminated(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], rng.rngs[env_i]);
+            mutable_terminated_flags(env_i) = terminated_flag_env;
         }
     }
 

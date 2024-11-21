@@ -63,8 +63,9 @@ vector_state = vector.VectorState()
 vector_next_state = vector.VectorState()
 
 vector.initialize_environment(device, vector_env)
-initialize_rng(device, rng, 0)
-vector.sample_initial_parameters(device, vector_env, vector_params, rng)
+vector_rng = vector.VectorRng()
+vector.initialize_rng(device, vector_rng, 0)
+vector.sample_initial_parameters(device, vector_env, vector_params, vector_rng)
 vector.initial_state(device, vector_env, vector_params, vector_state)
 vector_params.parameters = [copy.copy(params) for _ in range(vector_env.N_ENVIRONMENTS)]
 vector_env_parameters_json = parameters_to_json(device, vector_env.environments[0], vector_params.parameters[0])
@@ -79,7 +80,7 @@ dtype = np.float32
 action = np.ones((vector_env.N_ENVIRONMENTS, vector_env.ACTION_DIM), dtype=dtype)
 for step_i in range(N_STEPS):
     # print("step: ", step_i, " position", vector_state.states[0].position, " orientation", vector_state.states[0].orientation, " linear_velocity", vector_state.states[0].linear_velocity, " angular_velocity", vector_state.states[0].angular_velocity, " rpm", vector_state.states[0].rpm)
-    vector.step(device, vector_env, vector_params, vector_state, action, vector_next_state, rng)
+    vector.step(device, vector_env, vector_params, vector_state, action, vector_next_state, vector_rng)
     # print("next_step: ", step_i, " position", vector_next_state.states[0].position, " orientation", vector_next_state.states[0].orientation, " linear_velocity", vector_next_state.states[0].linear_velocity, " angular_velocity", vector_next_state.states[0].angular_velocity, " rpm", vector_next_state.states[0].rpm)
     # vector_trajectory.append(copy.copy(vector_state))
     vector_state.assign(vector_next_state)
