@@ -17,7 +17,7 @@ state = State()
 observation = Observation()
 next_state = State()
 observation = Observation()
-initialize_environment(device, env, params)
+initialize_environment(device, env)
 initialize_rng(device, rng, 0)
 
 
