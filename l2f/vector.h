@@ -66,6 +66,42 @@ namespace vector{
             rlt::sample_initial_parameters(device, env.environments[env_i], parameters.parameters[env_i], rng.rngs[env_i]);
         }
     }
+    template <TI N_ENVIRONMENTS>
+    void sample_initial_parameters_if_truncated(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, py::array_t<bool> truncated, Rng<N_ENVIRONMENTS>& rng){
+        if(!truncated.dtype().is(py::dtype::of<bool>())){
+            throw std::runtime_error("Expected bool array");
+        }
+        if (truncated.size() != N_ENVIRONMENTS) {
+            std::ostringstream oss;
+            oss << "Expected " << (N_ENVIRONMENTS)
+                << " truncated, got " << truncated.size();
+            throw std::runtime_error(oss.str());
+        }
+
+        if (truncated.ndim() != 1) {
+            std::ostringstream oss;
+            oss << "Expected 1D array (N_ENVIRONMENTS,), got " 
+                << truncated.ndim() << "D";
+            throw std::runtime_error(oss.str());
+        }
+
+        auto shape = truncated.shape();
+        if (shape[0] != N_ENVIRONMENTS) {
+            std::ostringstream oss;
+            oss << "Expected " << N_ENVIRONMENTS 
+                << " environments, got " << shape[0];
+            throw std::runtime_error(oss.str());
+        }
+
+        auto mutable_truncated = truncated.unchecked<1>();
+        #pragma omp parallel for schedule(dynamic, 1)
+        for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
+            if(mutable_truncated(env_i)){
+                rlt::sample_initial_parameters(device, env.environments[env_i], parameters.parameters[env_i], rng.rngs[env_i]);
+            }
+        }
+    }
+
 
     template <TI N_ENVIRONMENTS>
     void initial_state(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states){
@@ -80,6 +116,41 @@ namespace vector{
         #pragma omp parallel for
         for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
             rlt::sample_initial_state(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], rng.rngs[env_i]);
+        }
+    }
+    template <TI N_ENVIRONMENTS>
+    void sample_initial_state_if_truncated(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, py::array_t<bool> truncated, Rng<N_ENVIRONMENTS>& rng){
+        if(!truncated.dtype().is(py::dtype::of<bool>())){
+            throw std::runtime_error("Expected bool array");
+        }
+        if (truncated.size() != N_ENVIRONMENTS) {
+            std::ostringstream oss;
+            oss << "Expected " << (N_ENVIRONMENTS)
+                << " truncated, got " << truncated.size();
+            throw std::runtime_error(oss.str());
+        }
+
+        if (truncated.ndim() != 1) {
+            std::ostringstream oss;
+            oss << "Expected 1D array (N_ENVIRONMENTS,), got " 
+                << truncated.ndim() << "D";
+            throw std::runtime_error(oss.str());
+        }
+
+        auto shape = truncated.shape();
+        if (shape[0] != N_ENVIRONMENTS) {
+            std::ostringstream oss;
+            oss << "Expected " << N_ENVIRONMENTS 
+                << " environments, got " << shape[0];
+            throw std::runtime_error(oss.str());
+        }
+
+        auto mutable_truncated = truncated.unchecked<1>();
+        #pragma omp parallel for schedule(dynamic, 1)
+        for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
+            if(mutable_truncated(env_i)){
+                rlt::sample_initial_state(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], rng.rngs[env_i]);
+            }
         }
     }
 

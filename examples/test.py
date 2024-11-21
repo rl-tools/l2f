@@ -78,11 +78,14 @@ assign_time = 0
 start = time.time()
 dtype = np.float32
 action = np.ones((vector_env.N_ENVIRONMENTS, vector_env.ACTION_DIM), dtype=dtype)
+rewards = np.ones((vector_env.N_ENVIRONMENTS), dtype=dtype)
+truncated_flags = np.ones((vector_env.N_ENVIRONMENTS), dtype=np.bool)
 for step_i in range(N_STEPS):
-    # print("step: ", step_i, " position", vector_state.states[0].position, " orientation", vector_state.states[0].orientation, " linear_velocity", vector_state.states[0].linear_velocity, " angular_velocity", vector_state.states[0].angular_velocity, " rpm", vector_state.states[0].rpm)
+    vector.sample_initial_parameters_if_truncated(device, vector_env, vector_params, truncated_flags, vector_rng)
+    vector.sample_initial_state_if_truncated(device, vector_env, vector_params, vector_state, truncated_flags, vector_rng)
     vector.step(device, vector_env, vector_params, vector_state, action, vector_next_state, vector_rng)
-    # print("next_step: ", step_i, " position", vector_next_state.states[0].position, " orientation", vector_next_state.states[0].orientation, " linear_velocity", vector_next_state.states[0].linear_velocity, " angular_velocity", vector_next_state.states[0].angular_velocity, " rpm", vector_next_state.states[0].rpm)
-    # vector_trajectory.append(copy.copy(vector_state))
+    vector.reward(device, vector_env, vector_params, vector_state, action, vector_next_state, rewards, vector_rng)
+    vector.terminated(device, vector_env, vector_params, vector_state, truncated_flags, vector_rng)
     vector_state.assign(vector_next_state)
 
 

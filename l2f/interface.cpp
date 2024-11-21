@@ -42,8 +42,10 @@ py::module_ vector_factory(py::module_ &m){
 
     vector.def("initial_parameters", &vector::initial_parameters<N_ENVIRONMENTS>, "Reset to default parameters");
     vector.def("sample_initial_parameters", &vector::sample_initial_parameters<N_ENVIRONMENTS>, "Reset to random parameters");
+    vector.def("sample_initial_parameters_if_truncated", &vector::sample_initial_parameters_if_truncated<N_ENVIRONMENTS>, "Reset to random parameters");
     vector.def("initial_state", &vector::initial_state<N_ENVIRONMENTS>, "Reset to default state");
     vector.def("sample_initial_state", &vector::sample_initial_state<N_ENVIRONMENTS>, "Reset to random state");
+    vector.def("sample_initial_state_if_truncated", &vector::sample_initial_state_if_truncated<N_ENVIRONMENTS>, "Reset to random state");
     vector.def("step", &vector::step<N_ENVIRONMENTS>, "Simulate one step");
     vector.def("observe", &vector::observe<N_ENVIRONMENTS>, "Observe state");
     vector.def("reward", &vector::reward<N_ENVIRONMENTS>, "Get reward");
