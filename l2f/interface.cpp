@@ -7,7 +7,7 @@ namespace py = pybind11;
 #define VECTOR
 #ifdef VECTOR
     #ifndef VECTOR_N_ENVIRONMENTS
-        #define VECTOR_N_ENVIRONMENTS 1
+        #define VECTOR_N_ENVIRONMENTS 256
     #endif
 #include "vector.h"
 #include <pybind11/numpy.h>
@@ -210,6 +210,9 @@ PYBIND11_MODULE(interface, m) {
         .def_readwrite("parameters", &vector::Parameters<VECTOR_N_ENVIRONMENTS>::parameters);
     py::class_<vector::State<VECTOR_N_ENVIRONMENTS>>(vector, "State")
         .def(py::init<>())
+        .def("assign", [](vector::State<VECTOR_N_ENVIRONMENTS> &self, const vector::State<VECTOR_N_ENVIRONMENTS> &other) {
+            self = other;
+        })
         .def("__copy__", [](const vector::State<VECTOR_N_ENVIRONMENTS> &self) {
             return vector::State<VECTOR_N_ENVIRONMENTS>(self);
         })
