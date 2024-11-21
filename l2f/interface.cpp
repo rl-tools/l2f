@@ -4,14 +4,62 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 namespace py = pybind11;
-#define VECTOR
-#ifdef VECTOR
-    #ifndef VECTOR_N_ENVIRONMENTS
-        #define VECTOR_N_ENVIRONMENTS 256
+#define L2F_VECTOR
+#ifdef L2F_VECTOR
+    #ifndef L2F_VECTOR_N_ENVIRONMENTS
+        #define L2F_VECTOR_N_ENVIRONMENTS 1024
     #endif
 #include "vector.h"
 #include <pybind11/numpy.h>
 #endif
+
+template <TI N_ENVIRONMENTS>
+py::module_ vector_factory(py::module_ &m){
+    std::string name = "vector";
+    name += std::to_string(N_ENVIRONMENTS);
+    py::module_ vector = m.def_submodule(name.c_str());
+    vector.def("initialize_environment", &vector::initialize_environment<N_ENVIRONMENTS>, "Init environement");
+    vector.def("step", &vector::step<N_ENVIRONMENTS>, "Simulate one step");
+    py::class_<vector::Environment<N_ENVIRONMENTS>>(vector, "VectorEnvironment")
+        .def(py::init<>())
+        .def_property_readonly("OBSERVATION_DIM", [](const vector::Environment<N_ENVIRONMENTS> &self) { return ENVIRONMENT::Observation::DIM; })
+        .def_property_readonly("N_ENVIRONMENTS", [](const vector::Environment<N_ENVIRONMENTS> &self) { return vector::Environment<N_ENVIRONMENTS>::N_ENVIRONMENTS; })
+        .def_property_readonly("ACTION_DIM", [](const vector::Environment<N_ENVIRONMENTS> &self) { return ENVIRONMENT::ACTION_DIM; })
+        .def_readwrite("environments", &vector::Environment<N_ENVIRONMENTS>::environments);
+    py::class_<vector::Parameters<N_ENVIRONMENTS>>(vector, "VectorParameters")
+        .def(py::init<>())
+        .def_readwrite("parameters", &vector::Parameters<N_ENVIRONMENTS>::parameters);
+    py::class_<vector::State<N_ENVIRONMENTS>>(vector, "VectorState")
+        .def(py::init<>())
+        .def("assign", [](vector::State<N_ENVIRONMENTS> &self, const vector::State<N_ENVIRONMENTS> &other) {
+            self = other;
+        })
+        .def("__copy__", [](const vector::State<N_ENVIRONMENTS> &self) {
+            return vector::State<N_ENVIRONMENTS>(self);
+        })
+        .def_readwrite("states", &vector::State<N_ENVIRONMENTS>::states);
+    // py::class_<vector::PAD<ENVIRONMENT>, ENVIRONMENT>(vector, "Environment")
+    //     .def(py::init<>())
+    //     .def(py::init<ENVIRONMENT>());
+    // py::class_<vector::PAD<ENVIRONMENT::Parameters>, ENVIRONMENT::Parameters>(vector, "Parameters")
+    //     .def(py::init<>())
+    //     .def(py::init<ENVIRONMENT::Parameters>());
+    // py::class_<vector::PAD<ENVIRONMENT::State>, ENVIRONMENT::State>(vector, "State")
+    //     .def(py::init<>())
+    //     .def(py::init<ENVIRONMENT::State>())
+    //     .def("get_pointer", [](vector::PAD<ENVIRONMENT::State> &self) {
+    //         return reinterpret_cast<uintptr_t>(&self);
+    //     }, "Get the pointer address of the object");
+
+    vector.def("initial_parameters", &vector::initial_parameters<N_ENVIRONMENTS>, "Reset to default parameters");
+    vector.def("sample_initial_parameters", &vector::sample_initial_parameters<N_ENVIRONMENTS>, "Reset to random parameters");
+    vector.def("initial_state", &vector::initial_state<N_ENVIRONMENTS>, "Reset to default state");
+    vector.def("sample_initial_state", &vector::sample_initial_state<N_ENVIRONMENTS>, "Reset to random state");
+    vector.def("step", &vector::step<N_ENVIRONMENTS>, "Simulate one step");
+    vector.def("observe", &vector::observe<N_ENVIRONMENTS>, "Observe state");
+    return vector;
+}
+
 
 PYBIND11_MODULE(interface, m) {
     py::class_<DEVICE>(m, "Device")
@@ -195,33 +243,8 @@ PYBIND11_MODULE(interface, m) {
     m.def("observe", &observe, "Observe state");
     m.def("parameters_to_json", &parameters_to_json, "Convert parameters to json");
 
-#ifdef VECTOR
-    py::module_ vector = m.def_submodule("vector");
-    vector.def("initialize_environment", &vector::initialize_environment<VECTOR_N_ENVIRONMENTS>, "Init environement");
-    vector.def("step", &vector::step<VECTOR_N_ENVIRONMENTS>, "Simulate one step");
-    py::class_<vector::Environment<VECTOR_N_ENVIRONMENTS>>(vector, "Environment")
-        .def(py::init<>())
-        .def_property_readonly("OBSERVATION_DIM", [](const vector::Environment<VECTOR_N_ENVIRONMENTS> &self) { return ENVIRONMENT::Observation::DIM; })
-        .def_property_readonly("N_ENVIRONMENTS", [](const vector::Environment<VECTOR_N_ENVIRONMENTS> &self) { return vector::Environment<VECTOR_N_ENVIRONMENTS>::N_ENVIRONMENTS; })
-        .def_property_readonly("ACTION_DIM", [](const vector::Environment<VECTOR_N_ENVIRONMENTS> &self) { return ENVIRONMENT::ACTION_DIM; })
-        .def_readwrite("environments", &vector::Environment<VECTOR_N_ENVIRONMENTS>::environments);
-    py::class_<vector::Parameters<VECTOR_N_ENVIRONMENTS>>(vector, "Parameters")
-        .def(py::init<>())
-        .def_readwrite("parameters", &vector::Parameters<VECTOR_N_ENVIRONMENTS>::parameters);
-    py::class_<vector::State<VECTOR_N_ENVIRONMENTS>>(vector, "State")
-        .def(py::init<>())
-        .def("assign", [](vector::State<VECTOR_N_ENVIRONMENTS> &self, const vector::State<VECTOR_N_ENVIRONMENTS> &other) {
-            self = other;
-        })
-        .def("__copy__", [](const vector::State<VECTOR_N_ENVIRONMENTS> &self) {
-            return vector::State<VECTOR_N_ENVIRONMENTS>(self);
-        })
-        .def_readwrite("states", &vector::State<VECTOR_N_ENVIRONMENTS>::states);
-    vector.def("initial_parameters", &vector::initial_parameters<VECTOR_N_ENVIRONMENTS>, "Reset to default parameters");
-    vector.def("sample_initial_parameters", &vector::sample_initial_parameters<VECTOR_N_ENVIRONMENTS>, "Reset to random parameters");
-    vector.def("initial_state", &vector::initial_state<VECTOR_N_ENVIRONMENTS>, "Reset to default state");
-    vector.def("sample_initial_state", &vector::sample_initial_state<VECTOR_N_ENVIRONMENTS>, "Reset to random state");
-    vector.def("step", &vector::step<VECTOR_N_ENVIRONMENTS>, "Simulate one step");
-    vector.def("observe", &vector::observe<VECTOR_N_ENVIRONMENTS>, "Observe state");
+#ifdef L2F_VECTOR
+    vector_factory<1>(m);
+    vector_factory<L2F_VECTOR_N_ENVIRONMENTS>(m);
 #endif
 }

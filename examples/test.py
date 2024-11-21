@@ -1,4 +1,5 @@
 from l2f import *
+from l2f import vector1024 as vector
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
@@ -56,10 +57,10 @@ observe(device, env, params, state, observation, rng)
 # plt.plot([s.position[2] for s in trajectory])
 # plt.show()
 
-vector_env = vector.Environment()
-vector_params = vector.Parameters()
-vector_state = vector.State()
-vector_next_state = vector.State()
+vector_env = vector.VectorEnvironment()
+vector_params = vector.VectorParameters()
+vector_state = vector.VectorState()
+vector_next_state = vector.VectorState()
 
 vector.initialize_environment(device, vector_env)
 initialize_rng(device, rng, 0)
@@ -71,15 +72,25 @@ assert(vector_env_parameters_json == single_env_params_json)
 
 vector_trajectory = []
 N_STEPS = 100000
+step_time = 0
+assign_time = 0
 start = time.time()
+dtype = np.float32
+action = np.ones((vector_env.N_ENVIRONMENTS, vector_env.ACTION_DIM), dtype=dtype)
 for step_i in range(N_STEPS):
-    action = np.ones((vector_env.N_ENVIRONMENTS, vector_env.ACTION_DIM), dtype=np.float32)
     # print("step: ", step_i, " position", vector_state.states[0].position, " orientation", vector_state.states[0].orientation, " linear_velocity", vector_state.states[0].linear_velocity, " angular_velocity", vector_state.states[0].angular_velocity, " rpm", vector_state.states[0].rpm)
     vector.step(device, vector_env, vector_params, vector_state, action, vector_next_state, rng)
     # print("next_step: ", step_i, " position", vector_next_state.states[0].position, " orientation", vector_next_state.states[0].orientation, " linear_velocity", vector_next_state.states[0].linear_velocity, " angular_velocity", vector_next_state.states[0].angular_velocity, " rpm", vector_next_state.states[0].rpm)
     # vector_trajectory.append(copy.copy(vector_state))
     vector_state.assign(vector_next_state)
 
+
+
+
+
 end = time.time()
 
+
 print(f"Steps per second: {N_STEPS * vector_env.N_ENVIRONMENTS / (end - start)}")
+print(f"Step share: {step_time / (end - start)}")   
+print(f"Assign share: {assign_time / (end - start)}")

@@ -9,7 +9,7 @@ optimization = True
 if optimization:
     compile_args = {
         'msvc': ['/O2', '/fp:fast'],
-        'unix': ['-Ofast', '-march=native', '-fmax-errors=1'],
+        'unix': ['-Ofast', '-march=native', '-fmax-errors=1', '-fopenmp'],
         'macos': ['-Ofast', '-march=native', '-mmacosx-version-min=10.14'],
     }
 else:
@@ -26,7 +26,7 @@ if debug:
 
 link_args = {
     'msvc': [],
-    'unix': [],
+    'unix': ['-fopenmp'],
     'macos': [],
 }
 

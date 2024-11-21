@@ -7,7 +7,10 @@
             "request": "launch",
             "program": "examples/test.py",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": false,
+            "env": {
+                "OMP_NUM_THREADS": "4"
+            }
         },
     ]
 }
