@@ -62,6 +62,12 @@ PYBIND11_MODULE(interface, m) {
     py::class_<ENVIRONMENT>(m, "Environment")
         .def(py::init<>())
         .def_property_readonly("OBSERVATION_DIM", [](const ENVIRONMENT &self) { return ENVIRONMENT::Observation::DIM; });
+    py::class_<UI>(m, "UI")
+        .def(py::init<>())
+        .def_readwrite("ns", &UI::ns);
+    m.def("set_parameters_message", &set_parameters_message, "Set parameters message");
+    m.def("set_ui_message", &set_ui_message, "Set ui message");
+    m.def("set_state_action_message", &set_state_action_message, "Set state action message");
     py::class_<ENVIRONMENT::Parameters>(m, "Parameters")
         .def(py::init<>())
         .def("__copy__", [](const ENVIRONMENT::Parameters &self) {

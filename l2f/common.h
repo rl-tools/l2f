@@ -1,6 +1,7 @@
 #include <rl_tools/operations/cpu.h>
 #include <rl_tools/rl/environments/l2f/operations_cpu.h>
 #include <rl_tools/rl/environments/l2f/parameters/default.h>
+#include <rl_tools/ui_server/client/operations_cpu.h>
 
 
 #include <array>
@@ -46,6 +47,7 @@ namespace static_parameter_builder{
 
 using ENVIRONMENT_SPEC = rl_tools::rl::environments::l2f::Specification<T, TI, static_parameter_builder::ENVIRONMENT_STATIC_PARAMETERS>;
 using ENVIRONMENT = rl_tools::rl::environments::Multirotor<ENVIRONMENT_SPEC>;
+using UI = rl_tools::ui_server::client::UIJSON<ENVIRONMENT>;
 
 struct Observation{
     static constexpr TI DIM = ENVIRONMENT::Observation::DIM;
@@ -54,6 +56,22 @@ struct Observation{
 
 void initialize_rng(DEVICE &device, RNG& rng, TI seed){
     rng = rlt::random::default_engine(typename DEVICE::SPEC::RANDOM{}, seed);
+}
+
+std::string set_parameters_message(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters, UI& ui){
+    return rlt::parameters_message(device, env, parameters, ui);
+}
+std::string set_ui_message(DEVICE& device, ENVIRONMENT& env, UI& ui){
+    std::string ui_string = rlt::get_ui(device, env);
+    return rlt::set_ui_message(device, env, ui, ui_string);
+}
+std::string set_state_action_message(DEVICE& device, ENVIRONMENT& env, const ENVIRONMENT::Parameters& parameters, UI& ui, const ENVIRONMENT::State& state, std::array<T, ENVIRONMENT::ACTION_DIM> action){
+    rlt::Matrix<rlt::matrix::Specification<T, TI, 1, ENVIRONMENT::ACTION_DIM, false>> motor_commands;
+    for(TI action_i=0; action_i < 4; action_i++){
+        set(motor_commands, 0, action_i, action[action_i]);
+    }
+    std::string message = rlt::set_state_action_message(device, env, parameters, ui, state, motor_commands);
+    return message;
 }
 
 void initialize_environment(DEVICE &device, ENVIRONMENT& env){

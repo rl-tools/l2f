@@ -12,5 +12,27 @@
                 "OMP_NUM_THREADS": "16"
             }
         },
+        {
+            "name": "Example: UI",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "examples/ui.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "OMP_NUM_THREADS": "16"
+            }
+        },
+        {
+            "name": "SB3 Wrapper",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "l2f/wrappers/sb3.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "OMP_NUM_THREADS": "16"
+            }
+        },
     ]
 }
