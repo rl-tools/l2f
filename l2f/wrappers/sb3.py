@@ -3,6 +3,7 @@ from collections import OrderedDict
 from collections.abc import Sequence
 from copy import deepcopy
 from typing import Any, Callable, Optional
+import time
 
 import gymnasium as gym
 import numpy as np
@@ -11,16 +12,21 @@ from stable_baselines3.common.vec_env.base_vec_env import VecEnv, VecEnvIndices,
 from stable_baselines3.common.vec_env.patch_gym import _patch_env
 from stable_baselines3.common.vec_env.util import dict_to_obs, obs_space_info
 import l2f
+import l2f.ui_server
+print(l2f)
+import json
 vector = l2f.vector1024
+
 
 
 class L2F(VecEnv):
 
     actions: np.ndarray
 
-    def __init__(self, seed=0):
+    def __init__(self, seed=0, render_port=8080, start_ui_server=True):
         self.dtype = np.float32
         self.device = l2f.Device()
+        self.ui = l2f.UI()
         self.rngs = vector.VectorRng()
         vector.initialize_rng(self.device, self.rngs, seed)
         self.envs = vector.VectorEnvironment()
@@ -29,27 +35,17 @@ class L2F(VecEnv):
         self.states = vector.VectorState()
         self.next_states = vector.VectorState()
         self.actions = None
+        self.render_port = render_port
+        self.ui_server = None
+        self.ui_client = None
+        self.ui_last_sync = None
+        self.start_ui_server = start_ui_server
 
     def step_async(self, actions: np.ndarray) -> None:
         self.actions = actions
 
     def step_wait(self) -> VecEnvStepReturn:
         vector.step(self.device, self.envs, self.parameters, self.states, self.actions, self.next_states, self.rngs)
-        # for env_idx in range(self.num_envs):
-        #     obs, self.buf_rews[env_idx], terminated, truncated, self.buf_infos[env_idx] = self.envs[env_idx].step(
-        #         self.actions[env_idx]
-        #     )
-        #     # convert to SB3 VecEnv api
-        #     self.buf_dones[env_idx] = terminated or truncated
-        #     # See https://github.com/openai/gym/issues/3102
-        #     # Gym 0.26 introduces a breaking change
-        #     self.buf_infos[env_idx]["TimeLimit.truncated"] = truncated and not terminated
-
-        #     if self.buf_dones[env_idx]:
-        #         # save final observation where user can get it, then reset
-        #         self.buf_infos[env_idx]["terminal_observation"] = obs
-        #         obs, self.reset_infos[env_idx] = self.envs[env_idx].reset()
-        #     self._save_obs(env_idx, obs)
         observation = np.empty((self.envs.N_ENVIRONMENTS, self.envs.OBSERVATION_DIM), dtype=self.dtype)
         vector.observe(self.device, self.envs, self.parameters, self.next_states, observation, self.rngs)
         rewards = np.empty((self.envs.N_ENVIRONMENTS), dtype=self.dtype)
@@ -77,18 +73,56 @@ class L2F(VecEnv):
         observation = np.empty((self.envs.N_ENVIRONMENTS, self.envs.OBSERVATION_DIM), dtype=self.dtype)
         return observation
 
-
     def close(self):
         pass
 
-
-
-
     def get_images(self):
         return []
-
+    
+    def _get_event_loop(self):
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        return loop
 
     def render(self, mode = None):
+        if mode == "human":
+            from websocket import create_connection
+            if self.start_ui_server and (self.ui_server is None or self.ui_server.is_alive() is False):
+                if self.ui_server is not None:
+                    warnings.warn("ui_server is not alive. Restarting...")
+                print("Starting ui_server...")
+                self.ui_server = l2f.ui_server.start_server_in_background(port = self.render_port, scenario = "")
+            if self.ui_client is None:
+                uri = f"ws://localhost:{self.render_port}/backend"
+                max_retries = 5
+                retry_delay = 0.1
+                for attempt in range(max_retries):
+                    try:
+                        client = create_connection(uri)
+                        print(f"Connected to {uri} on attempt {attempt + 1}.")
+                        handshake = json.loads(client.recv())
+                        namespace = handshake["data"]["namespace"]
+                        self.ui.ns = namespace
+                        ui_message = l2f.set_ui_message(self.device, self.envs.environments[0], self.ui)
+                        client.send(ui_message)
+                        self.ui_client = client
+                        break
+                    except ConnectionRefusedError:
+                        print(f"Connection refused. Retrying in {retry_delay} seconds... (Attempt {attempt + 1}/{max_retries})")
+                        time.sleep(retry_delay)
+                return None
+            else:
+                now = time.time()
+                if self.ui_last_sync is None or now - self.ui_last_sync > 1:
+                    parameters_message = l2f.set_parameters_message(self.device, self.envs.environments[0], self.parameters.parameters[0], self.ui)
+                    self.ui_client.send(parameters_message)
+                    self.ui_last_sync = now
+                state_action_message = l2f.set_state_action_message(self.device, self.envs.environments[0], self.parameters.parameters[0], self.ui, self.states.states[0], [0, 0, 0, 0])
+                self.ui_client.send(state_action_message)
         return None
 
     def get_attr(self, attr_name: str, indices: VecEnvIndices = None) -> list[Any]:
@@ -104,10 +138,19 @@ class L2F(VecEnv):
 
 
 if __name__ == "__main__":
-    env = L2F()
+    import time
+    env = L2F() #start_ui_server=False, render_port=13337)
     env.reset()
     action = np.ones((env.envs.N_ENVIRONMENTS, env.envs.ACTION_DIM), dtype=env.dtype)
-    for step in range(100):
-        env.step(action)
+    wait_time = 1
+    print(f"Waiting for {wait_time} seconds...")
+    time.sleep(wait_time)
+    while True:
+        env.reset()
+        env.render(mode = "human")
+        for step in range(100):
+            env.render(mode="human")
+            env.step(action)
+            time.sleep(0.01)
     env.close()
     print("done")
