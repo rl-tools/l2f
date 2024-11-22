@@ -35,7 +35,7 @@ async def websocket_handler(request):
                 state.ui_sessions.add(ws)
                 print("UI client connected")
                 for message in state.latched_messages_backend.values():
-                    print(f"Sending latched message: {message}")
+                    print(f"Sending latched message: {message["channel"]}")
                     await ws.send_str(json.dumps(message))
             else:  # backend
                 state.backend_sessions.add(ws)
@@ -50,7 +50,7 @@ async def websocket_handler(request):
                 }
                 await ws.send_json(handshake)
                 for message in state.latched_messages_ui.values():
-                    print(f"Sending latched message: {message}")
+                    print(f"Sending latched message: {message["channel"]}")
                     await ws.send_str(json.dumps(message))
 
 
@@ -59,7 +59,7 @@ async def websocket_handler(request):
                 try:
                     parsed = json.loads(msg.data)
                     if("latch" in parsed and parsed["latch"]):
-                        print(f"Saving latched message: {parsed}")
+                        print(f"Saving latched message: {parsed["channel"]}")
                         if is_ui:
                             state.latched_messages_ui[parsed["channel"]] = parsed
                         else:
@@ -145,7 +145,7 @@ def start_server(static_path = "./static", port = 8080, scenario = ""):
 
     web.run_app(app, port=port)
 
-def start_server_in_background(port = 8080, scenario = ""):
+def start_server_in_background(port = 8080, scenario = "", open_browser = True):
     from multiprocessing import Process
 
     def target():
@@ -157,7 +157,11 @@ def start_server_in_background(port = 8080, scenario = ""):
         start_server(static_path = static_path, port = port, scenario = scenario)
     process = Process(target=target)
     process.start()
-    print("ui_server is running in a background process.")
+    print(f"ui_server should be running in a background process. Check http://localhost:{port}")
+    if open_browser:
+        import webbrowser
+        webbrowser.open(f"http://localhost:{port}")
+
     return process
 
 
