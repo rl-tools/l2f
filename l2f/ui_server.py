@@ -35,7 +35,7 @@ async def websocket_handler(request):
                 state.ui_sessions.add(ws)
                 print("UI client connected")
                 for message in state.latched_messages_backend.values():
-                    print(f"Sending latched message: {message["channel"]}")
+                    print(f"Sending latched message: {message['channel']}")
                     await ws.send_str(json.dumps(message))
             else:  # backend
                 state.backend_sessions.add(ws)
@@ -50,7 +50,7 @@ async def websocket_handler(request):
                 }
                 await ws.send_json(handshake)
                 for message in state.latched_messages_ui.values():
-                    print(f"Sending latched message: {message["channel"]}")
+                    print(f"Sending latched message: {message['channel']}")
                     await ws.send_str(json.dumps(message))
 
 
@@ -59,7 +59,7 @@ async def websocket_handler(request):
                 try:
                     parsed = json.loads(msg.data)
                     if("latch" in parsed and parsed["latch"]):
-                        print(f"Saving latched message: {parsed["channel"]}")
+                        print(f"Saving latched message: {parsed['channel']}")
                         if is_ui:
                             state.latched_messages_ui[parsed["channel"]] = parsed
                         else:

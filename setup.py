@@ -44,7 +44,7 @@ else:
 ext_modules = [
     Pybind11Extension(
         "l2f.interface",
-        ["l2f/interface.cpp"],  # Adjust the source file paths as necessary
+        ["l2f/interface.cpp"],
         include_dirs=["external/rl-tools/include"],
         extra_compile_args=compile_args['current'],
         extra_link_args=link_args['current'],
