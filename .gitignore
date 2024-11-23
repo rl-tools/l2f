@@ -5,3 +5,5 @@
 .vscode/settings.json
 /dist
 /a.out
+/*.zip
+/tensorboard

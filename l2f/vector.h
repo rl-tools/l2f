@@ -329,13 +329,17 @@ namespace vector{
             throw std::runtime_error(oss.str());
         }
 
-        auto buf = actions.request();
-        T *data = static_cast<T*>(buf.ptr);
-        rlt::Matrix<rlt::matrix::Specification<T, TI, N_ENVIRONMENTS, ENVIRONMENT::ACTION_DIM, true>> action_matrix = {data};
+        auto actions_buf = actions.request();
+        T *actions_data = static_cast<T*>(actions_buf.ptr);
+        rlt::Matrix<rlt::matrix::Specification<T, TI, N_ENVIRONMENTS, ENVIRONMENT::ACTION_DIM, true>> action_matrix = {actions_data};
+        auto rewards_buf = rewards.request();
+        T *rewards_data = static_cast<T*>(rewards_buf.ptr);
+        rlt::Matrix<rlt::matrix::Specification<T, TI, 1, N_ENVIRONMENTS, true>> reward_matrix = {rewards_data};
         #pragma omp parallel for
         for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
             auto view = rlt::row(device, action_matrix, env_i);
-            rlt::reward(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], view, next_states.states[env_i], rng.rngs[env_i]);
+            T reward = rlt::reward(device, env.environments[env_i], parameters.parameters[env_i], states.states[env_i], view, next_states.states[env_i], rng.rngs[env_i]);
+            set(reward_matrix, 0, env_i, reward);
         }
     }
     template <TI N_ENVIRONMENTS>
