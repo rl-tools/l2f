@@ -46,7 +46,7 @@ class L2F(VecEnv):
 
     def step_async(self, actions: np.ndarray) -> None:
         assert(not np.isnan(actions).any())
-        self.actions = actions.copy()
+        self.actions = actions
 
     def step_wait(self) -> VecEnvStepReturn:
         vector.step(self.device, self.envs, self.parameters, self.states, self.actions, self.next_states, self.rngs)
@@ -60,12 +60,12 @@ class L2F(VecEnv):
         buf_infos = [{} for _ in range(self.envs.N_ENVIRONMENTS)]
         for env_idx in range(self.envs.N_ENVIRONMENTS):
             if dones[env_idx]:
-                buf_infos[env_idx]["terminal_observation"] = observation[env_idx].copy()
+                buf_infos[env_idx]["terminal_observation"] = observation[env_idx]
                 buf_infos[env_idx]["TimeLimit.truncated"] = False
             else:
                 if self.episode_step[env_idx] >= self.episode_step_limit:
                     buf_infos[env_idx]["TimeLimit.truncated"] = True
-                    buf_infos[env_idx]["terminal_observation"] = observation[env_idx].copy()
+                    buf_infos[env_idx]["terminal_observation"] = observation[env_idx]
                 else:
                     buf_infos[env_idx]["TimeLimit.truncated"] = False
 
@@ -80,7 +80,7 @@ class L2F(VecEnv):
         vector.observe(self.device, self.envs, self.parameters, self.next_states, next_observation, self.rngs)
         assert(not np.isnan(next_observation).any())
         self.states.assign(self.next_states)
-        return (next_observation.copy(), rewards.copy(), dones.copy(), buf_infos)
+        return (next_observation, rewards, dones, buf_infos)
 
 
 

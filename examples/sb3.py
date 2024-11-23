@@ -18,13 +18,7 @@ policy_kwargs = dict(
 # model = PPO("MlpPolicy", vec_env, verbose=1, n_epochs=1, n_steps=128, policy_kwargs=policy_kwargs, tensorboard_log="./tensorboard/")
 N = 400000
 model = SAC("MlpPolicy", vec_env, buffer_size=N, verbose=1, tensorboard_log="./tensorboard/")
-train = True
-# train = False
-if train:
-    model.learn(total_timesteps=N)
-    model.save("l2f.zip")
-
-model.load("l2f.zip")
+model.learn(total_timesteps=N)
 
 while True:
     obs = vec_env.reset()
