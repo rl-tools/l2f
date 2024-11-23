@@ -46,5 +46,17 @@
                 "OMP_NUM_THREADS": "16"
             }
         },
+        {
+            "name": "Example: SB3",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "examples/sb3.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "OMP_NUM_THREADS": "16",
+                "CUDA_VISIBLE_DEVICES": ""
+            }
+        }
     ]
 }

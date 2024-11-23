@@ -15,13 +15,11 @@ import l2f
 import l2f.ui_server
 print(l2f)
 import json
-vector = l2f.vector1024
+vector = l2f.vector8
 
 
 
 class L2F(VecEnv):
-
-    actions: np.ndarray
 
     def __init__(self, seed=0, render_port=8080, start_ui_server=True):
         self.dtype = np.float32
@@ -40,14 +38,21 @@ class L2F(VecEnv):
         self.ui_client = None
         self.ui_last_sync = None
         self.start_ui_server = start_ui_server
+        self.episode_step = np.zeros((self.envs.N_ENVIRONMENTS,), dtype=np.int32)
+        self.episode_step_limit = self.envs.EPISODE_STEP_LIMIT
+        observation_space = gym.spaces.Box(low=-10, high=10, shape=(self.envs.OBSERVATION_DIM,), dtype=np.float32)
+        action_space = gym.spaces.Box(low=-1, high=1, shape=(self.envs.ACTION_DIM,), dtype=np.float32)
+        super().__init__(self.envs.N_ENVIRONMENTS, observation_space, action_space)
 
     def step_async(self, actions: np.ndarray) -> None:
-        self.actions = actions
+        assert(not np.isnan(actions).any())
+        self.actions = actions.copy()
 
     def step_wait(self) -> VecEnvStepReturn:
         vector.step(self.device, self.envs, self.parameters, self.states, self.actions, self.next_states, self.rngs)
         observation = np.empty((self.envs.N_ENVIRONMENTS, self.envs.OBSERVATION_DIM), dtype=self.dtype)
         vector.observe(self.device, self.envs, self.parameters, self.next_states, observation, self.rngs)
+        assert(not np.isnan(observation).any())
         rewards = np.empty((self.envs.N_ENVIRONMENTS), dtype=self.dtype)
         vector.reward(self.device, self.envs, self.parameters, self.states, self.actions, self.next_states, rewards, self.rngs)
         dones = np.empty((self.envs.N_ENVIRONMENTS), dtype=bool)
@@ -56,13 +61,26 @@ class L2F(VecEnv):
         for env_idx in range(self.envs.N_ENVIRONMENTS):
             if dones[env_idx]:
                 buf_infos[env_idx]["terminal_observation"] = observation[env_idx].copy()
+                buf_infos[env_idx]["TimeLimit.truncated"] = False
+            else:
+                if self.episode_step[env_idx] >= self.episode_step_limit:
+                    buf_infos[env_idx]["TimeLimit.truncated"] = True
+                    buf_infos[env_idx]["terminal_observation"] = observation[env_idx].copy()
+                else:
+                    buf_infos[env_idx]["TimeLimit.truncated"] = False
+
+        dones = np.logical_or(dones, self.episode_step >= self.episode_step_limit)
+        self.episode_step += 1
+        self.episode_step *= (1-dones)
+
         vector.sample_initial_parameters_if_truncated(self.device, self.envs, self.parameters, dones, self.rngs)
-        vector.sample_initial_state_if_truncated(self.device, self.envs, self.parameters, self.states, dones, self.rngs)
+        vector.sample_initial_state_if_truncated(self.device, self.envs, self.parameters, self.next_states, dones, self.rngs)
 
         next_observation = np.empty((self.envs.N_ENVIRONMENTS, self.envs.OBSERVATION_DIM), dtype=self.dtype)
         vector.observe(self.device, self.envs, self.parameters, self.next_states, next_observation, self.rngs)
+        assert(not np.isnan(next_observation).any())
         self.states.assign(self.next_states)
-        return (next_observation, rewards, dones, buf_infos)
+        return (next_observation.copy(), rewards.copy(), dones.copy(), buf_infos)
 
 
 
@@ -71,7 +89,8 @@ class L2F(VecEnv):
         vector.sample_initial_parameters(self.device, self.envs, self.parameters, self.rngs)
         vector.sample_initial_state(self.device, self.envs, self.parameters, self.states, self.rngs)
         observation = np.empty((self.envs.N_ENVIRONMENTS, self.envs.OBSERVATION_DIM), dtype=self.dtype)
-        return observation
+        vector.observe(self.device, self.envs, self.parameters, self.states, observation, self.rngs)
+        return observation.copy()
 
     def close(self):
         pass
@@ -126,7 +145,7 @@ class L2F(VecEnv):
         return None
 
     def get_attr(self, attr_name: str, indices: VecEnvIndices = None) -> list[Any]:
-        return [None for _ in self.envs.N_ENVIRONMENTS]
+        return [None for _ in range(self.envs.N_ENVIRONMENTS)]
     def set_attr(self, attr_name: str, value: Any, indices: VecEnvIndices = None) -> None:
         pass
 

@@ -22,6 +22,7 @@ py::module_ vector_factory(py::module_ &m){
         .def_property_readonly("OBSERVATION_DIM", [](const vector::Environment<N_ENVIRONMENTS> &self) { return ENVIRONMENT::Observation::DIM; })
         .def_property_readonly("N_ENVIRONMENTS", [](const vector::Environment<N_ENVIRONMENTS> &self) { return vector::Environment<N_ENVIRONMENTS>::N_ENVIRONMENTS; })
         .def_property_readonly("ACTION_DIM", [](const vector::Environment<N_ENVIRONMENTS> &self) { return ENVIRONMENT::ACTION_DIM; })
+        .def_property_readonly("EPISODE_STEP_LIMIT", [](const vector::Environment<N_ENVIRONMENTS> &self) { return ENVIRONMENT::EPISODE_STEP_LIMIT; })
         .def_readwrite("environments", &vector::Environment<N_ENVIRONMENTS>::environments);
     py::class_<vector::Parameters<N_ENVIRONMENTS>>(vector, "VectorParameters")
         .def(py::init<>())
@@ -246,14 +247,14 @@ PYBIND11_MODULE(interface, m) {
     // vector_factory<1>(m);
     // vector_factory<2>(m);
     // vector_factory<4>(m);
-    // vector_factory<8>(m);
+    vector_factory<8>(m);
     // vector_factory<16>(m);
     // vector_factory<32>(m);
     // vector_factory<64>(m);
     // vector_factory<128>(m);
     // vector_factory<256>(m);
     // vector_factory<512>(m);
-    vector_factory<1024>(m);
+    // vector_factory<1024>(m);
     // vector_factory<2048>(m);
     // vector_factory<4096>(m);
     // vector_factory<8192>(m);

@@ -1,6 +1,5 @@
 #include <rl_tools/operations/cpu.h>
-#include <rl_tools/rl/environments/l2f/operations_cpu.h>
-#include <rl_tools/rl/environments/l2f/parameters/default.h>
+#include "environment.h"
 #include <rl_tools/ui_server/client/operations_cpu.h>
 
 
@@ -14,39 +13,43 @@ using RNG = decltype(rlt::random::default_engine(typename DEVICE::SPEC::RANDOM{}
 using T = float;
 using TI = typename DEVICE::index_t;
 
-namespace static_parameter_builder{
-    // to prevent spamming the global namespace
-    using namespace rl_tools::rl::environments::l2f;
-    struct ENVIRONMENT_STATIC_PARAMETERS{
-        static constexpr TI ACTION_HISTORY_LENGTH = 1;
-        using STATE_BASE = StateBase<T, TI>;
-        using STATE_TYPE = StateRotorsHistory<T, TI, ACTION_HISTORY_LENGTH, false, StateRandomForce<T, TI, STATE_BASE>>;
-        using OBSERVATION_TYPE = observation::Position<observation::PositionSpecification<T, TI,
-                observation::OrientationRotationMatrix<observation::OrientationRotationMatrixSpecification<T, TI,
-                        observation::LinearVelocity<observation::LinearVelocitySpecification<T, TI,
-                                observation::AngularVelocity<observation::AngularVelocitySpecification<T, TI,
-                                        observation::ActionHistory<observation::ActionHistorySpecification<T, TI, ACTION_HISTORY_LENGTH>>>>>>>>>>;
-        using OBSERVATION_TYPE_PRIVILEGED = observation::Position<observation::PositionSpecificationPrivileged<T, TI,
-                observation::OrientationRotationMatrix<observation::OrientationRotationMatrixSpecificationPrivileged<T, TI,
-                        observation::LinearVelocity<observation::LinearVelocitySpecificationPrivileged<T, TI,
-                                observation::AngularVelocity<observation::AngularVelocitySpecificationPrivileged<T, TI,
-                                        observation::RandomForce<observation::RandomForceSpecification<T, TI,
-                                                observation::RotorSpeeds<observation::RotorSpeedsSpecification<T, TI>>
-                                        >
-                                        >
-                                >>
-                        >>
-                >>
-        >>;
-        static constexpr bool PRIVILEGED_OBSERVATION_NOISE = false;
-        using PARAMETER_FACTORY = parameters::DefaultParameters<T, TI>;
-        static constexpr auto PARAMETER_VALUES = PARAMETER_FACTORY::parameters;
-        using PARAMETERS = typename PARAMETER_FACTORY::PARAMETERS_TYPE;
-    };
-}
+// namespace static_parameter_builder{
+//     // to prevent spamming the global namespace
+//     using namespace rl_tools::rl::environments::l2f;
+//     struct ENVIRONMENT_STATIC_PARAMETERS{
+//         static constexpr TI ACTION_HISTORY_LENGTH = 1;
+//         using STATE_BASE = StateBase<T, TI>;
+//         using STATE_TYPE = StateRotorsHistory<T, TI, ACTION_HISTORY_LENGTH, false, StateRandomForce<T, TI, STATE_BASE>>;
+//         using OBSERVATION_TYPE = observation::Position<observation::PositionSpecification<T, TI,
+//                 observation::OrientationRotationMatrix<observation::OrientationRotationMatrixSpecification<T, TI,
+//                         observation::LinearVelocity<observation::LinearVelocitySpecification<T, TI,
+//                                 observation::AngularVelocity<observation::AngularVelocitySpecification<T, TI,
+//                                         observation::ActionHistory<observation::ActionHistorySpecification<T, TI, ACTION_HISTORY_LENGTH>>>>>>>>>>;
+//         using OBSERVATION_TYPE_PRIVILEGED = observation::Position<observation::PositionSpecificationPrivileged<T, TI,
+//                 observation::OrientationRotationMatrix<observation::OrientationRotationMatrixSpecificationPrivileged<T, TI,
+//                         observation::LinearVelocity<observation::LinearVelocitySpecificationPrivileged<T, TI,
+//                                 observation::AngularVelocity<observation::AngularVelocitySpecificationPrivileged<T, TI,
+//                                         observation::RandomForce<observation::RandomForceSpecification<T, TI,
+//                                                 observation::RotorSpeeds<observation::RotorSpeedsSpecification<T, TI>>
+//                                         >
+//                                         >
+//                                 >>
+//                         >>
+//                 >>
+//         >>;
+//         static constexpr bool PRIVILEGED_OBSERVATION_NOISE = false;
+//         using PARAMETER_FACTORY = parameters::DefaultParameters<T, TI>;
+//         static constexpr auto PARAMETER_VALUES = PARAMETER_FACTORY::parameters;
+//         using PARAMETERS = typename PARAMETER_FACTORY::PARAMETERS_TYPE;
+//     };
+// }
 
-using ENVIRONMENT_SPEC = rl_tools::rl::environments::l2f::Specification<T, TI, static_parameter_builder::ENVIRONMENT_STATIC_PARAMETERS>;
-using ENVIRONMENT = rl_tools::rl::environments::Multirotor<ENVIRONMENT_SPEC>;
+// using ENVIRONMENT_SPEC = rl_tools::rl::environments::l2f::Specification<T, TI, static_parameter_builder::ENVIRONMENT_STATIC_PARAMETERS>;
+// using ENVIRONMENT = rl_tools::rl::environments::Multirotor<ENVIRONMENT_SPEC>;
+
+using ENVIRONMENT = env_builder::ENVIRONMENT_FACTORY<DEVICE, T, TI>::ENVIRONMENT;
+
+
 using UI = rl_tools::ui_server::client::UIJSON<ENVIRONMENT>;
 
 struct Observation{
