@@ -12,8 +12,9 @@ policy_kwargs = dict(
     net_arch=dict(pi=[32, 32], vf=[32, 32])
 )
 
-model = SAC("MlpPolicy", vec_env, buffer_size=1_000_000, verbose=1)
-model.learn(total_timesteps=1_000_000)
+N = 400000
+model = SAC("MlpPolicy", vec_env, buffer_size=N, verbose=1)
+model.learn(total_timesteps=N)
 
 while True:
     obs = vec_env.reset()

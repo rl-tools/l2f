@@ -244,20 +244,20 @@ PYBIND11_MODULE(interface, m) {
     m.def("parameters_to_json", &parameters_to_json, "Convert parameters to json");
 
 #ifdef L2F_VECTOR
-    // vector_factory<1>(m);
-    // vector_factory<2>(m);
-    // vector_factory<4>(m);
+    vector_factory<1>(m);
+    vector_factory<2>(m);
+    vector_factory<4>(m);
     vector_factory<8>(m);
-    // vector_factory<16>(m);
-    // vector_factory<32>(m);
-    // vector_factory<64>(m);
-    // vector_factory<128>(m);
-    // vector_factory<256>(m);
-    // vector_factory<512>(m);
-    // vector_factory<1024>(m);
-    // vector_factory<2048>(m);
-    // vector_factory<4096>(m);
-    // vector_factory<8192>(m);
+    vector_factory<16>(m);
+    vector_factory<32>(m);
+    vector_factory<64>(m);
+    vector_factory<128>(m);
+    vector_factory<256>(m);
+    vector_factory<512>(m);
+    vector_factory<1024>(m);
+    vector_factory<2048>(m);
+    vector_factory<4096>(m);
+    vector_factory<8192>(m);
 #ifdef L2F_VECTOR_N_ENVIRONMENTS
     vector_factory<L2F_VECTOR_N_ENVIRONMENTS>(m);
 #endif
