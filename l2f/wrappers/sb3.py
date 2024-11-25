@@ -1,16 +1,10 @@
 import warnings
-from collections import OrderedDict
-from collections.abc import Sequence
-from copy import deepcopy
-from typing import Any, Callable, Optional
 import time
 
 import gymnasium as gym
 import numpy as np
 
 from stable_baselines3.common.vec_env.base_vec_env import VecEnv, VecEnvIndices, VecEnvObs, VecEnvStepReturn
-from stable_baselines3.common.vec_env.patch_gym import _patch_env
-from stable_baselines3.common.vec_env.util import dict_to_obs, obs_space_info
 import l2f
 import l2f.ui_server
 import json
@@ -44,11 +38,11 @@ class L2F(VecEnv):
         action_space = gym.spaces.Box(low=-1, high=1, shape=(self.envs.ACTION_DIM,), dtype=np.float32)
         super().__init__(self.envs.N_ENVIRONMENTS, observation_space, action_space)
 
-    def step_async(self, actions: np.ndarray) -> None:
+    def step_async(self, actions):
         assert(not np.isnan(actions).any())
         self.actions = actions
 
-    def step_wait(self) -> VecEnvStepReturn:
+    def step_wait(self):
         self.vector.step(self.device, self.envs, self.parameters, self.states, self.actions, self.next_states, self.rngs)
         observation = np.empty((self.envs.N_ENVIRONMENTS, self.envs.OBSERVATION_DIM), dtype=self.dtype)
         self.vector.observe(self.device, self.envs, self.parameters, self.next_states, observation, self.rngs)
@@ -85,7 +79,7 @@ class L2F(VecEnv):
 
 
 
-    def reset(self) -> VecEnvObs:
+    def reset(self):
         self.vector.sample_initial_parameters(self.device, self.envs, self.parameters, self.rngs)
         self.vector.sample_initial_state(self.device, self.envs, self.parameters, self.states, self.rngs)
         observation = np.empty((self.envs.N_ENVIRONMENTS, self.envs.OBSERVATION_DIM), dtype=self.dtype)
@@ -144,12 +138,12 @@ class L2F(VecEnv):
                 self.ui_client.send(state_action_message)
         return None
 
-    def get_attr(self, attr_name: str, indices: VecEnvIndices = None) -> list[Any]:
+    def get_attr(self, attr_name, indices = None):
         return [None for _ in range(self.envs.N_ENVIRONMENTS)]
-    def set_attr(self, attr_name: str, value: Any, indices: VecEnvIndices = None) -> None:
+    def set_attr(self, attr_name, value, indices = None):
         pass
 
-    def env_method(self, method_name: str, *method_args, indices: VecEnvIndices = None, **method_kwargs) -> list[Any]:
+    def env_method(self, method_name, *method_args, indices = None, **method_kwargs):
         pass
 
     def env_is_wrapped(self, wrapper_class, indices = None):
