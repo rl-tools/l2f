@@ -54,7 +54,7 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {
-                "OMP_NUM_THREADS": "16",
+                "OMP_NUM_THREADS": "1",
                 "CUDA_VISIBLE_DEVICES": ""
             }
         }
