@@ -44,14 +44,17 @@ else:
 
 
 obs = vec_env.reset()
+episode_return = 0
 episode_step = 0
 while True:
     action, _states = model.predict(obs, deterministic=True)
     obs, rewards, dones, info = vec_env.step(action)
     vec_env.render(mode="human")
     time.sleep(0.01)
+    episode_return += rewards[0]
     episode_step += 1
     if episode_step > 500 or dones[0]:
+        print(f"Episode done in {episode_step} steps with return {episode_return}")
         episode_step = 0
+        episode_return = 0
         obs = vec_env.reset()
-        print("Episode done")
