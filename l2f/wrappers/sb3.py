@@ -4,7 +4,7 @@ import time
 import gymnasium as gym
 import numpy as np
 
-from stable_baselines3.common.vec_env.base_vec_env import VecEnv, VecEnvIndices, VecEnvObs, VecEnvStepReturn
+from stable_baselines3.common.vec_env.base_vec_env import VecEnv
 import l2f
 import l2f.ui_server
 import json
