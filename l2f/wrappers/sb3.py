@@ -34,7 +34,7 @@ class L2F(VecEnv):
         self.start_ui_server = start_ui_server
         self.episode_step = np.zeros((self.envs.N_ENVIRONMENTS,), dtype=np.int32)
         self.episode_step_limit = self.envs.EPISODE_STEP_LIMIT
-        observation_space = gym.spaces.Box(low=-10, high=10, shape=(self.envs.OBSERVATION_DIM,), dtype=np.float32)
+        observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.envs.OBSERVATION_DIM,), dtype=np.float32)
         action_space = gym.spaces.Box(low=-1, high=1, shape=(self.envs.ACTION_DIM,), dtype=np.float32)
         super().__init__(self.envs.N_ENVIRONMENTS, observation_space, action_space)
 
@@ -84,7 +84,7 @@ class L2F(VecEnv):
         self.vector.sample_initial_state(self.device, self.envs, self.parameters, self.states, self.rngs)
         observation = np.empty((self.envs.N_ENVIRONMENTS, self.envs.OBSERVATION_DIM), dtype=self.dtype)
         self.vector.observe(self.device, self.envs, self.parameters, self.states, observation, self.rngs)
-        return observation.copy()
+        return observation
 
     def close(self):
         pass
