@@ -13,24 +13,7 @@ from stable_baselines3.common.vec_env.patch_gym import _patch_env
 from stable_baselines3.common.vec_env.util import dict_to_obs, obs_space_info
 import l2f
 import l2f.ui_server
-print(l2f)
 import json
-vector_selector = {
-    1: l2f.vector1,
-    2: l2f.vector2,
-    4: l2f.vector4,
-    8: l2f.vector8,
-    16: l2f.vector16,
-    32: l2f.vector32,
-    64: l2f.vector64,
-    128: l2f.vector128,
-    256: l2f.vector256,
-    512: l2f.vector512,
-    1024: l2f.vector1024,
-    2048: l2f.vector2048,
-    4096: l2f.vector4096,
-    8192: l2f.vector8192,
-}
 
 
 
@@ -40,8 +23,8 @@ class L2F(VecEnv):
         self.dtype = np.float32
         self.device = l2f.Device()
         self.ui = l2f.UI()
-        assert(n_envs in vector_selector, f"n_envs must be one of {list(vector_selector.keys())}")
-        self.vector = vector_selector[n_envs]
+        assert(n_envs in l2f.vector_selector, f"n_envs must be one of {list(l2f.vector_selector.keys())}")
+        self.vector = l2f.vector_selector[n_envs]
         self.rngs = self.vector.VectorRng()
         self.vector.initialize_rng(self.device, self.rngs, seed)
         self.envs = self.vector.VectorEnvironment()
