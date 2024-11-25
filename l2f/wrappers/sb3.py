@@ -15,23 +15,40 @@ import l2f
 import l2f.ui_server
 print(l2f)
 import json
-vector = l2f.vector8
+vector_selector = {
+    1: l2f.vector1,
+    2: l2f.vector2,
+    4: l2f.vector4,
+    8: l2f.vector8,
+    16: l2f.vector16,
+    32: l2f.vector32,
+    64: l2f.vector64,
+    128: l2f.vector128,
+    256: l2f.vector256,
+    512: l2f.vector512,
+    1024: l2f.vector1024,
+    2048: l2f.vector2048,
+    4096: l2f.vector4096,
+    8192: l2f.vector8192,
+}
 
 
 
 class L2F(VecEnv):
 
-    def __init__(self, seed=0, render_port=8080, start_ui_server=True):
+    def __init__(self, n_envs, seed=0, render_port=8080, start_ui_server=True):
         self.dtype = np.float32
         self.device = l2f.Device()
         self.ui = l2f.UI()
-        self.rngs = vector.VectorRng()
-        vector.initialize_rng(self.device, self.rngs, seed)
-        self.envs = vector.VectorEnvironment()
-        vector.initialize_environment(self.device, self.envs)
-        self.parameters = vector.VectorParameters()
-        self.states = vector.VectorState()
-        self.next_states = vector.VectorState()
+        assert(n_envs in vector_selector, f"n_envs must be one of {list(vector_selector.keys())}")
+        self.vector = vector_selector[n_envs]
+        self.rngs = self.vector.VectorRng()
+        self.vector.initialize_rng(self.device, self.rngs, seed)
+        self.envs = self.vector.VectorEnvironment()
+        self.vector.initialize_environment(self.device, self.envs)
+        self.parameters = self.vector.VectorParameters()
+        self.states = self.vector.VectorState()
+        self.next_states = self.vector.VectorState()
         self.actions = None
         self.render_port = render_port
         self.ui_server = None
@@ -49,14 +66,14 @@ class L2F(VecEnv):
         self.actions = actions
 
     def step_wait(self) -> VecEnvStepReturn:
-        vector.step(self.device, self.envs, self.parameters, self.states, self.actions, self.next_states, self.rngs)
+        self.vector.step(self.device, self.envs, self.parameters, self.states, self.actions, self.next_states, self.rngs)
         observation = np.empty((self.envs.N_ENVIRONMENTS, self.envs.OBSERVATION_DIM), dtype=self.dtype)
-        vector.observe(self.device, self.envs, self.parameters, self.next_states, observation, self.rngs)
+        self.vector.observe(self.device, self.envs, self.parameters, self.next_states, observation, self.rngs)
         assert(not np.isnan(observation).any())
         rewards = np.empty((self.envs.N_ENVIRONMENTS), dtype=self.dtype)
-        vector.reward(self.device, self.envs, self.parameters, self.states, self.actions, self.next_states, rewards, self.rngs)
+        self.vector.reward(self.device, self.envs, self.parameters, self.states, self.actions, self.next_states, rewards, self.rngs)
         dones = np.empty((self.envs.N_ENVIRONMENTS), dtype=bool)
-        vector.terminated(self.device, self.envs, self.parameters, self.states, dones, self.rngs)
+        self.vector.terminated(self.device, self.envs, self.parameters, self.states, dones, self.rngs)
         buf_infos = [{} for _ in range(self.envs.N_ENVIRONMENTS)]
         for env_idx in range(self.envs.N_ENVIRONMENTS):
             if dones[env_idx]:
@@ -73,11 +90,11 @@ class L2F(VecEnv):
         self.episode_step += 1
         self.episode_step *= (1-dones)
 
-        vector.sample_initial_parameters_if_truncated(self.device, self.envs, self.parameters, dones, self.rngs)
-        vector.sample_initial_state_if_truncated(self.device, self.envs, self.parameters, self.next_states, dones, self.rngs)
+        self.vector.sample_initial_parameters_if_truncated(self.device, self.envs, self.parameters, dones, self.rngs)
+        self.vector.sample_initial_state_if_truncated(self.device, self.envs, self.parameters, self.next_states, dones, self.rngs)
 
         next_observation = np.empty((self.envs.N_ENVIRONMENTS, self.envs.OBSERVATION_DIM), dtype=self.dtype)
-        vector.observe(self.device, self.envs, self.parameters, self.next_states, next_observation, self.rngs)
+        self.vector.observe(self.device, self.envs, self.parameters, self.next_states, next_observation, self.rngs)
         assert(not np.isnan(next_observation).any())
         self.states.assign(self.next_states)
         return (next_observation, rewards, dones, buf_infos)
@@ -86,10 +103,10 @@ class L2F(VecEnv):
 
 
     def reset(self) -> VecEnvObs:
-        vector.sample_initial_parameters(self.device, self.envs, self.parameters, self.rngs)
-        vector.sample_initial_state(self.device, self.envs, self.parameters, self.states, self.rngs)
+        self.vector.sample_initial_parameters(self.device, self.envs, self.parameters, self.rngs)
+        self.vector.sample_initial_state(self.device, self.envs, self.parameters, self.states, self.rngs)
         observation = np.empty((self.envs.N_ENVIRONMENTS, self.envs.OBSERVATION_DIM), dtype=self.dtype)
-        vector.observe(self.device, self.envs, self.parameters, self.states, observation, self.rngs)
+        self.vector.observe(self.device, self.envs, self.parameters, self.states, observation, self.rngs)
         return observation.copy()
 
     def close(self):
