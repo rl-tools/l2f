@@ -11,6 +11,7 @@ seed = 1338
 
 if library == "sbx":
     from sbx import PPO, SAC, TD3
+    import jax
 elif library == "sb3":
     from stable_baselines3 import PPO, SAC, TD3
 
@@ -21,7 +22,7 @@ if algorithm == "ppo":
 
     hidden_dim = 64
     policy_kwargs = dict(
-        activation_fn=torch.nn.ReLU,
+        activation_fn=torch.nn.ReLU if library == "sb3" else jax.nn.relu,
         net_arch=dict(pi=[hidden_dim, hidden_dim], vf=[hidden_dim, hidden_dim], qf=[hidden_dim, hidden_dim]),
     )
 
@@ -29,13 +30,13 @@ if algorithm == "ppo":
     model = PPO("MlpPolicy", vec_env, seed=seed, verbose=1, n_epochs=1, n_steps=128,batch_size = 4096, policy_kwargs=policy_kwargs, normalize_advantage=True, learning_rate=1e-3, vf_coef=1, tensorboard_log="./tensorboard/")
     model.learn(total_timesteps=N)
 elif algorithm == "sac":
-    n_envs = 16
+    n_envs = 1
     vec_env = L2F(n_envs, seed=seed)
     vec_env = VecMonitor(vec_env)
 
-    hidden_dim = 32
+    hidden_dim = 256
     policy_kwargs = dict(
-        activation_fn=torch.nn.ReLU,
+        activation_fn=torch.nn.ReLU if library == "sb3" else jax.nn.relu,
         net_arch=dict(pi=[hidden_dim, hidden_dim], vf=[hidden_dim, hidden_dim], qf=[hidden_dim, hidden_dim]),
     )
 
@@ -47,9 +48,9 @@ elif algorithm == "td3":
     vec_env = L2F(n_envs, seed=seed)
     vec_env = VecMonitor(vec_env)
 
-    hidden_dim = 32
+    hidden_dim = 256
     policy_kwargs = dict(
-        activation_fn=torch.nn.Tanh,
+        activation_fn=torch.nn.ReLU if library == "sb3" else jax.nn.relu,
         net_arch=dict(pi=[hidden_dim, hidden_dim], vf=[hidden_dim, hidden_dim], qf=[hidden_dim, hidden_dim]),
     )
 
