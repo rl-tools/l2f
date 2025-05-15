@@ -38,7 +38,8 @@ namespace vector{
     void initialize_rng(DEVICE &device, Rng<N_ENVIRONMENTS>& rng, TI seed){
         #pragma omp parallel for
         for(TI env_i=0; env_i < N_ENVIRONMENTS; env_i++){
-            rng.rngs[env_i] = rlt::random::default_engine(typename DEVICE::SPEC::RANDOM{}, seed + env_i);
+            rlt::malloc(device, rng.rngs[env_i]);
+            rlt::init(device, rng.rngs[env_i], seed + env_i);
         }
     }
 

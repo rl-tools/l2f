@@ -1,3 +1,6 @@
 [submodule "external/rl-tools"]
 	path = external/rl-tools
 	url = https://github.com/rl-tools/rl-tools.git
+[submodule "external/json"]
+	path = external/json
+	url = https://github.com/nlohmann/json.git

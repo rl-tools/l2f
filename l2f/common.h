@@ -9,7 +9,7 @@ namespace rlt = rl_tools;
 
 
 using DEVICE = rlt::devices::DefaultCPU;
-using RNG = decltype(rlt::random::default_engine(typename DEVICE::SPEC::RANDOM{}));
+using RNG = typename DEVICE::SPEC::RANDOM::ENGINE<>;
 using T = float;
 using TI = typename DEVICE::index_t;
 
@@ -58,7 +58,8 @@ struct Observation{
 };
 
 void initialize_rng(DEVICE &device, RNG& rng, TI seed){
-    rng = rlt::random::default_engine(typename DEVICE::SPEC::RANDOM{}, seed);
+    rlt::malloc(device, rng);
+    rlt::init(device, rng, seed);
 }
 
 std::string set_parameters_message(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters, UI& ui){
@@ -112,5 +113,9 @@ void observe(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& paramete
 
 std::string parameters_to_json(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Parameters& parameters){
     return rlt::json(device, env, parameters);
+}
+
+void parameters_to_json(DEVICE& device, ENVIRONMENT& env, const std::string& json, ENVIRONMENT::Parameters& parameters){
+    return rlt::from_json(device, env, json, parameters);
 }
 

@@ -25,12 +25,26 @@ namespace env_builder{
                 00.10, // action
         };
 
-        using PARAMETERS_SPEC = rl_tools::rl::environments::l2f::ParametersBaseSpecification<T, TI, 4, REWARD_FUNCTION, rl_tools::rl::environments::l2f::parameters::dynamics::REGISTRY, MODEL>;
-        using PARAMETERS_TYPE = rl_tools::rl::environments::l2f::ParametersDisturbances<T, TI, rl_tools::rl::environments::l2f::ParametersBase<PARAMETERS_SPEC>>;
+        struct TRAJECTORY_OPTIONS{
+            static constexpr bool LANGEVIN = false;
+        };
+        struct DOMAIN_RANDOMIZATION_OPTIONS{
+            static constexpr bool ENABLED = false;
+            static constexpr bool THRUST_TO_WEIGHT = ENABLED;
+            static constexpr bool MASS = ENABLED;
+            static constexpr bool TORQUE_TO_INERTIA = ENABLED;
+            static constexpr bool MASS_SIZE_DEVIATION = ENABLED;
+            static constexpr bool ROTOR_TORQUE_CONSTANT = ENABLED;
+            static constexpr bool DISTURBANCE_FORCE = ENABLED;
+            static constexpr bool ROTOR_TIME_CONSTANT = ENABLED;
+        };
+        using PARAMETERS_SPEC = ParametersBaseSpecification<T, TI, 4, REWARD_FUNCTION>;
+        using PARAMETERS_TYPE = ParametersTrajectory<ParametersTrajectorySpecification<T, TI, TRAJECTORY_OPTIONS, ParametersDomainRandomization<ParametersDomainRandomizationSpecification<T, TI, DOMAIN_RANDOMIZATION_OPTIONS, ParametersDisturbances<ParametersSpecification<T, TI, ParametersBase<PARAMETERS_SPEC>>>>>>>;
 
-        static constexpr typename PARAMETERS_TYPE::Dynamics dynamics = rl_tools::rl::environments::l2f::parameters::dynamics::registry<PARAMETERS_SPEC>;
+        static constexpr typename PARAMETERS_TYPE::Dynamics dynamics = rl_tools::rl::environments::l2f::parameters::dynamics::registry<MODEL, PARAMETERS_SPEC>;
+        static constexpr TI SIMULATION_FREQUENCY = 100;
         static constexpr typename PARAMETERS_TYPE::Integration integration = {
-            0.01 // integration dt
+            1.0/((T)SIMULATION_FREQUENCY) // integration dt
         };
         static constexpr typename PARAMETERS_TYPE::MDP::Initialization init = rl_tools::rl::environments::l2f::parameters::init::init_90_deg<PARAMETERS_SPEC>;
         static constexpr typename PARAMETERS_TYPE::MDP::ObservationNoise observation_noise = {
@@ -73,41 +87,45 @@ namespace env_builder{
             typename PARAMETERS_TYPE::Disturbances::UnivariateGaussian{0, 0}, // random_force;
             typename PARAMETERS_TYPE::Disturbances::UnivariateGaussian{0, 0} // random_torque;
         };
+        static constexpr typename PARAMETERS_TYPE::Trajectory trajectory = {
+            {1.0, 0.0}, // mixture weights
+            typename PARAMETERS_TYPE::Trajectory::Langevin{
+                1.00, // gamma
+                2.00, // omega
+                0.50, // sigma
+                0.01 // alpha
+            }
+        };
         static constexpr PARAMETERS_TYPE nominal_parameters = {
             {
-                dynamics,
-                integration,
-                mdp,
+                {
+                    {
+                        dynamics,
+                        integration,
+                        mdp
+                    }, // Base
+                    disturbances
+                }, // Disturbances
                 domain_randomization
-            },
-            disturbances
+            }, // DomainRandomization
+            trajectory // Trajectory
         };
 
         struct ENVIRONMENT_STATIC_PARAMETERS{
+            static constexpr TI N_SUBSTEPS = 1;
             static constexpr TI ACTION_HISTORY_LENGTH = 16;
-            static constexpr TI CLOSED_FORM = false;
-            using STATE_BASE = StateBase<T, TI>;
-            using STATE_TYPE = StateRotorsHistory<T, TI, ACTION_HISTORY_LENGTH, CLOSED_FORM, StateRandomForce<T, TI, STATE_BASE>>;
-            using OBSERVATION_TYPE = observation::Position<observation::PositionSpecification<T, TI,
-                    observation::OrientationRotationMatrix<observation::OrientationRotationMatrixSpecification<T, TI,
-                            observation::LinearVelocity<observation::LinearVelocitySpecification<T, TI,
-                                    observation::AngularVelocity<observation::AngularVelocitySpecification<T, TI,
-                                            observation::ActionHistory<observation::ActionHistorySpecification<T, TI, ACTION_HISTORY_LENGTH>>>>>>>>>>;
-            using OBSERVATION_TYPE_PRIVILEGED = observation::Position<observation::PositionSpecificationPrivileged<T, TI,
-                    observation::OrientationRotationMatrix<observation::OrientationRotationMatrixSpecificationPrivileged<T, TI,
-                            observation::LinearVelocity<observation::LinearVelocitySpecificationPrivileged<T, TI,
-                                    observation::AngularVelocity<observation::AngularVelocitySpecificationPrivileged<T, TI,
-                                            observation::RandomForce<observation::RandomForceSpecification<T, TI,
-                                                    observation::RotorSpeeds<observation::RotorSpeedsSpecification<T, TI>>
-                                            >
-                                            >
-                                    >>
-                            >>
-                    >>
-            >>;
+            static constexpr TI EPISODE_STEP_LIMIT = 5 * SIMULATION_FREQUENCY;
+            static constexpr TI ANGULAR_VELOCITY_DELAY = 0; 
+            static constexpr TI ANGULAR_VELOCITY_HISTORY = ANGULAR_VELOCITY_DELAY;
+            using STATE_TYPE = StateTrajectory<StateSpecification<T, TI, DefaultActionHistoryState<T, TI, ACTION_HISTORY_LENGTH, ANGULAR_VELOCITY_HISTORY>>>;
+            using OBSERVATION_TYPE = DefaultActionHistoryObservation<T, TI, ACTION_HISTORY_LENGTH, ANGULAR_VELOCITY_DELAY>;
+            using OBSERVATION_TYPE_PRIVILEGED = OBSERVATION_TYPE;
             static constexpr bool PRIVILEGED_OBSERVATION_NOISE = false;
             using PARAMETERS = PARAMETERS_TYPE;
             static constexpr auto PARAMETER_VALUES = nominal_parameters;
+            static constexpr T STATE_LIMIT_POSITION = 100000;
+            static constexpr T STATE_LIMIT_VELOCITY = 100000;
+            static constexpr T STATE_LIMIT_ANGULAR_VELOCITY = 100000;
         };
 
         using ENVIRONMENT_SPEC = rl_tools::rl::environments::l2f::Specification<T, TI, ENVIRONMENT_STATIC_PARAMETERS>;
