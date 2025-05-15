@@ -24,22 +24,18 @@
             }
         },
         {
+            "name": "Example: UI (min)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "examples/ui_min.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
             "name": "SB3 Wrapper",
             "type": "debugpy",
             "request": "launch",
             "program": "l2f/wrappers/sb3.py",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-            "env": {
-                "OMP_NUM_THREADS": "16"
-            }
-        },
-        {
-            "name": "UI Server",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "l2f/ui_server.py",
-            "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {

@@ -1,8 +1,6 @@
 from l2f import *
 from l2f import vector1024 as vector
-import numpy as np
 import sys
-import matplotlib.pyplot as plt
 import copy
 import time
 import asyncio
@@ -18,7 +16,6 @@ rng = Rng()
 
 env = Environment()
 ui = UI()
-ui.ns = "l2f"
 params = Parameters()
 state = State()
 observation = Observation()
@@ -46,8 +43,7 @@ initial_state(device, env, params, state)
 
 
 async def main():
-    # uri = "ws://localhost:13337/backend"
-    uri = "ws://localhost:8080/backend"
+    uri = "ws://localhost:13337/backend"
     async with websockets.connect(uri) as websocket:
         handshake = json.loads(await websocket.recv(uri))
         print(f"Handshake: {handshake}")
@@ -61,16 +57,12 @@ async def main():
         await websocket.send(ui_message)
         await websocket.send(parameters_message)
         for step_i in range(100):
-            # sleep for 1 second
-
-            step(device, env, params, state, [1, 0, 0, 0], next_state, rng)
+            action = [1, 0, 0, 0]
+            step(device, env, params, state, action, next_state, rng)
             state.assign(next_state)
             state_action_message = set_state_action_message(device, env, params, ui, state, [0, 0, 0, 0])
             await websocket.send(state_action_message)
             await asyncio.sleep(0.1)
-
-
-
 
 if __name__ == "__main__":
     asyncio.run(main())
