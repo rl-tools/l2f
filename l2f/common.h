@@ -115,7 +115,7 @@ std::string parameters_to_json(DEVICE& device, ENVIRONMENT& env, ENVIRONMENT::Pa
     return rlt::json(device, env, parameters);
 }
 
-void parameters_to_json(DEVICE& device, ENVIRONMENT& env, const std::string& json, ENVIRONMENT::Parameters& parameters){
+void parameters_from_json(DEVICE& device, ENVIRONMENT& env, const std::string& json, ENVIRONMENT::Parameters& parameters){
     return rlt::from_json(device, env, json, parameters);
 }
 

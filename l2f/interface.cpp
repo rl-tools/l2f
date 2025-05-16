@@ -241,8 +241,8 @@ PYBIND11_MODULE(interface, m) {
     m.def("initial_state", &initial_state, "Reset to default state");
     m.def("sample_initial_state", &sample_initial_state, "Reset to random state");
     m.def("observe", &observe, "Observe state");
-    // m.def("parameters_to_json", &parameters_to_json, "Convert parameters to json");
-    // m.def("parameters_from_json", &parameters_from_json, "Set parameters from json");
+    m.def("parameters_to_json", &parameters_to_json, "Convert parameters to json");
+    m.def("parameters_from_json", &parameters_from_json, "Set parameters from json");
 
 #ifdef L2F_VECTOR
     vector_factory<1>(m);
