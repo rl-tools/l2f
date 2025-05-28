@@ -99,45 +99,37 @@ PYBIND11_MODULE(interface, m) {
         [](ENVIRONMENT::State &self){
             return py::array_t<T>({3}, {sizeof(T)}, self.position, py::cast(&self));
         },
-        [](ENVIRONMENT::State &self, const DYNAMIC_ARRAY &a){
-            if (a.size() != 3) throw std::runtime_error("Expected length 3");
-            std::copy_n(a.data(), 3, self.position);
-        })
+        [](ENVIRONMENT::State &self, const std::array<T, 3> &new_data) {
+            std::copy(new_data.begin(), new_data.end(), std::begin(self.position));
+        }
+    )
     .def_property("orientation",
-        [](ENVIRONMENT::State &self) -> std::array<T, 4> {
-            std::array<T, 4> orientation;
-            std::copy(std::begin(self.orientation), std::end(self.orientation), orientation.begin());
-            return orientation;
+        [](ENVIRONMENT::State &self){
+            return py::array_t<T>({4}, {sizeof(T)}, self.orientation, py::cast(&self));
         },
         [](ENVIRONMENT::State &self, const std::array<T, 4> &new_data) {
             std::copy(new_data.begin(), new_data.end(), std::begin(self.orientation));
         }
     )
     .def_property("linear_velocity",
-        [](ENVIRONMENT::State &self) -> std::array<T, 3> {
-            std::array<T, 3> linear_velocity;
-            std::copy(std::begin(self.linear_velocity), std::end(self.linear_velocity), linear_velocity.begin());
-            return linear_velocity;
+        [](ENVIRONMENT::State &self){
+            return py::array_t<T>({3}, {sizeof(T)}, self.linear_velocity, py::cast(&self));
         },
         [](ENVIRONMENT::State &self, const std::array<T, 3> &new_data) {
             std::copy(new_data.begin(), new_data.end(), std::begin(self.linear_velocity));
         }
     )
     .def_property("angular_velocity",
-        [](ENVIRONMENT::State &self) -> std::array<T, 3> {
-            std::array<T, 3> angular_velocity;
-            std::copy(std::begin(self.angular_velocity), std::end(self.angular_velocity), angular_velocity.begin());
-            return angular_velocity;
+        [](ENVIRONMENT::State &self){
+            return py::array_t<T>({3}, {sizeof(T)}, self.angular_velocity, py::cast(&self));
         },
         [](ENVIRONMENT::State &self, const std::array<T, 3> &new_data) {
             std::copy(new_data.begin(), new_data.end(), std::begin(self.angular_velocity));
         }
     )
     .def_property("rpm", 
-        [](ENVIRONMENT::State &self) -> std::array<T, 4> {
-            std::array<T, 4> rpm;
-            std::copy(std::begin(self.rpm), std::end(self.rpm), rpm.begin());
-            return rpm;
+        [](ENVIRONMENT::State &self){
+            return py::array_t<T>({4}, {sizeof(T)}, self.rpm, py::cast(&self));
         },
         [](ENVIRONMENT::State &self, const std::array<T, 4> &new_data) {
             std::copy(new_data.begin(), new_data.end(), std::begin(self.rpm));
