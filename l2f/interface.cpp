@@ -5,10 +5,15 @@
 #include <pybind11/stl.h>
 namespace py = pybind11;
 #define L2F_VECTOR
+// DEBUG: only compile vector8 to speed up compilation
+#define DEBUG
 #ifdef L2F_VECTOR
 #include "vector.h"
 #include <pybind11/numpy.h>
 #endif
+
+
+using DYNAMIC_ARRAY = py::array_t<T, py::array::c_style | py::array::forcecast>;
 
 template <TI N_ENVIRONMENTS>
 py::module_ vector_factory(py::module_ &m){
@@ -59,6 +64,11 @@ py::module_ vector_factory(py::module_ &m){
 
 
 PYBIND11_MODULE(interface, m) {
+    #ifdef DEBUG
+    m.attr("DEBUG") = true;
+    #else
+    m.attr("DEBUG") = false;
+    #endif
     py::class_<DEVICE>(m, "Device")
         .def(py::init<>());
     py::class_<RNG>(m, "Rng")
@@ -89,20 +99,10 @@ PYBIND11_MODULE(interface, m) {
         [](ENVIRONMENT::State &self){
             return py::array_t<T>({3}, {sizeof(T)}, self.position, py::cast(&self));
         },
-        [](ENVIRONMENT::State &self, const py::array_t<T, py::array::c_style | py::array::forcecast> &a){
-            if (a.size() != 3) throw std::runtime_error("expected length 3");
+        [](ENVIRONMENT::State &self, const DYNAMIC_ARRAY &a){
+            if (a.size() != 3) throw std::runtime_error("Expected length 3");
             std::copy_n(a.data(), 3, self.position);
         })
-    // .def_property("position",
-    //     [](ENVIRONMENT::State &self) -> std::array<T, 3> {
-    //         std::array<T, 3> position;
-    //         std::copy(std::begin(self.position), std::end(self.position), position.begin());
-    //         return position;
-    //     },
-    //     [](ENVIRONMENT::State &self, const std::array<T, 3> &new_data) {
-    //         std::copy(new_data.begin(), new_data.end(), std::begin(self.position));
-    //     }
-    // )
     .def_property("orientation",
         [](ENVIRONMENT::State &self) -> std::array<T, 4> {
             std::array<T, 4> orientation;
@@ -163,10 +163,13 @@ PYBIND11_MODULE(interface, m) {
     m.def("parameters_from_json", &parameters_from_json, "Set parameters from json");
 
 #ifdef L2F_VECTOR
+#ifndef DEBUG
     // vector_factory<1>(m);
     // vector_factory<2>(m);
     // vector_factory<4>(m);
+#endif
     vector_factory<8>(m);
+#ifndef DEBUG
     // vector_factory<16>(m);
     // vector_factory<32>(m);
     // vector_factory<64>(m);
@@ -179,6 +182,7 @@ PYBIND11_MODULE(interface, m) {
     // vector_factory<8192>(m);
 #ifdef L2F_VECTOR_N_ENVIRONMENTS
     vector_factory<L2F_VECTOR_N_ENVIRONMENTS>(m);
+#endif
 #endif
 #endif
 }
