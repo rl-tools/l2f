@@ -16,6 +16,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+[project.optional-dependencies]
+examples = [
+    "ui-server",
+    "foundation-policy"
+]
 
 [project.urls]
 Homepage = "https://github.com/rl-tools/l2f"
