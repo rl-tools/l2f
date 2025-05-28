@@ -8,12 +8,14 @@ namespace py = pybind11;
 // DEBUG: only compile vector8 to speed up compilation
 #define DEBUG
 #ifdef L2F_VECTOR
-#include "vector.h"
+
 #include <pybind11/numpy.h>
+using DYNAMIC_ARRAY = py::array_t<T, py::array::c_style | py::array::forcecast>;
+
+#include "vector.h"
 #endif
 
 
-using DYNAMIC_ARRAY = py::array_t<T, py::array::c_style | py::array::forcecast>;
 
 template <TI N_ENVIRONMENTS>
 py::module_ vector_factory(py::module_ &m){

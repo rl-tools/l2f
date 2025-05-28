@@ -5,7 +5,6 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-
 #ifndef L2F_CACHE_LINE_SIZE
 #define L2F_CACHE_LINE_SIZE 64
 #endif
@@ -27,14 +26,17 @@ namespace vector{
         static constexpr TI N_ENVIRONMENTS = T_N_ENVIRONMENTS;
         alignas(L2F_CACHE_LINE_SIZE) std::array<ENVIRONMENT::Parameters, N_ENVIRONMENTS> parameters;
     };
-
-
     template <TI T_N_ENVIRONMENTS>
     struct State{
         static constexpr TI N_ENVIRONMENTS = T_N_ENVIRONMENTS;
         alignas(L2F_CACHE_LINE_SIZE) std::array<ENVIRONMENT::State, N_ENVIRONMENTS> states;
     };
-    using ACTIONS_INPUT_TYPE = py::array_t<T, py::array::c_style | py::array::forcecast>;
+    // template <TI T_N_ENVIRONMENTS>
+    // struct State{
+    //     static constexpr TI N_ENVIRONMENTS = T_N_ENVIRONMENTS;
+    //     alignas(L2F_CACHE_LINE_SIZE) std::array<ENVIRONMENT::State, N_ENVIRONMENTS> states;
+    // };
+
     template <TI N_ENVIRONMENTS>
     void initialize_rng(DEVICE &device, Rng<N_ENVIRONMENTS>& rng, TI seed){
         #pragma omp parallel for
@@ -157,7 +159,7 @@ namespace vector{
     }
 
     template <TI N_ENVIRONMENTS>
-    std::array<T, N_ENVIRONMENTS> step(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, ACTIONS_INPUT_TYPE actions, State<N_ENVIRONMENTS>& next_states, Rng<N_ENVIRONMENTS>& rng){
+    std::array<T, N_ENVIRONMENTS> step(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, DYNAMIC_ARRAY actions, State<N_ENVIRONMENTS>& next_states, Rng<N_ENVIRONMENTS>& rng){
         static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "Expected float or double array");
         if(!actions.dtype().is(py::dtype::of<T>())){
             std::ostringstream oss;
@@ -211,7 +213,7 @@ namespace vector{
     }
 
     template <TI N_ENVIRONMENTS>
-    void observe(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, py::array observations, Rng<N_ENVIRONMENTS>& rng){
+    void observe(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, DYNAMIC_ARRAY observations, Rng<N_ENVIRONMENTS>& rng){
         static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "Expected float or double array");
         if(!observations.dtype().is(py::dtype::of<T>())){
             std::ostringstream oss;
@@ -265,7 +267,7 @@ namespace vector{
         }
     }
     template <TI N_ENVIRONMENTS>
-    void reward(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, ACTIONS_INPUT_TYPE actions, State<N_ENVIRONMENTS>& next_states, py::array rewards, Rng<N_ENVIRONMENTS>& rng){
+    void reward(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, State<N_ENVIRONMENTS>& states, DYNAMIC_ARRAY actions, State<N_ENVIRONMENTS>& next_states, DYNAMIC_ARRAY rewards, Rng<N_ENVIRONMENTS>& rng){
         static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "Expected float or double array");
         if(!actions.dtype().is(py::dtype::of<T>())){
             std::ostringstream oss;
@@ -403,7 +405,7 @@ namespace vector{
         return parameters_message;
     }
     template <TI N_ENVIRONMENTS>
-    std::string set_state_action_message(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, UI& ui, State<N_ENVIRONMENTS>& states, ACTIONS_INPUT_TYPE actions){
+    std::string set_state_action_message(DEVICE& device, Environment<N_ENVIRONMENTS>& env, Parameters<N_ENVIRONMENTS>& parameters, UI& ui, State<N_ENVIRONMENTS>& states, DYNAMIC_ARRAY actions){
         static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "Expected float or double array");
         if(!actions.dtype().is(py::dtype::of<T>())){
             std::ostringstream oss;
