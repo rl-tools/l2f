@@ -21,7 +21,7 @@ vector.sample_initial_parameters(device, env, params, rng)
 vector.sample_initial_state(device, env, params, state, rng)
 
 async def main():
-    uri = "ws://localhost:13337/backend"
+    uri = "ws://localhost:13337/backend" # connection to the UI server
     async with websockets.connect(uri) as websocket:
         handshake = json.loads(await websocket.recv(uri))
         assert(handshake["channel"] == "handshake")

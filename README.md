@@ -16,9 +16,21 @@ For the CUDA usage please refer to [rl-tools/l2f-benchmark](https://github.com/r
 
 ## Getting Started
 
+Install UIServer (forwards states to HTML/JS UI) and the foundation-policy (a general quadrotor policy)
+
 ```
 pip install l2f ui-server foundation-policy
 ```
+
+
+Run the UIServer
+```
+ui-server
+```
+Navigate to [http://localhost:13337](http://localhost:13337)
+This is run separately from the client code such that you can keep the browser open, without windows popping up and going away when re-running your code. Also the camera perspective is maintained across runs.
+
+Then run e.g.:
 
 ```python
 from copy import copy
