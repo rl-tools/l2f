@@ -51,6 +51,9 @@ py::module_ vector_factory(py::module_ &m){
     vector.def("observe", &vector::observe<N_ENVIRONMENTS>, "Observe state");
     vector.def("reward", &vector::reward<N_ENVIRONMENTS>, "Get reward");
     vector.def("terminated", &vector::terminated<N_ENVIRONMENTS>, "Check if terminated");
+    vector.def("set_parameters_message", &vector::set_parameters_message<N_ENVIRONMENTS>, "Set parameters message");
+    vector.def("set_ui_message", &vector::set_ui_message<N_ENVIRONMENTS>, "Set ui message");
+    vector.def("set_state_action_message", &vector::set_state_action_message<N_ENVIRONMENTS>, "Set state action message");
     return vector;
 }
 
@@ -175,16 +178,24 @@ PYBIND11_MODULE(interface, m) {
     .def("assign", [](ENVIRONMENT::State &self, const ENVIRONMENT::State &other) {
         self = other;
     })
-    .def_property("position",
-        [](ENVIRONMENT::State &self) -> std::array<T, 3> {
-            std::array<T, 3> position;
-            std::copy(std::begin(self.position), std::end(self.position), position.begin());
-            return position;
+    .def_property("position", 
+        [](ENVIRONMENT::State &self){
+            return py::array_t<T>({3}, {sizeof(T)}, self.position, py::cast(&self));
         },
-        [](ENVIRONMENT::State &self, const std::array<T, 3> &new_data) {
-            std::copy(new_data.begin(), new_data.end(), std::begin(self.position));
-        }
-    )
+        [](ENVIRONMENT::State &self, const py::array_t<T, py::array::c_style | py::array::forcecast> &a){
+            if (a.size() != 3) throw std::runtime_error("expected length 3");
+            std::copy_n(a.data(), 3, self.position);
+        })
+    // .def_property("position",
+    //     [](ENVIRONMENT::State &self) -> std::array<T, 3> {
+    //         std::array<T, 3> position;
+    //         std::copy(std::begin(self.position), std::end(self.position), position.begin());
+    //         return position;
+    //     },
+    //     [](ENVIRONMENT::State &self, const std::array<T, 3> &new_data) {
+    //         std::copy(new_data.begin(), new_data.end(), std::begin(self.position));
+    //     }
+    // )
     .def_property("orientation",
         [](ENVIRONMENT::State &self) -> std::array<T, 4> {
             std::array<T, 4> orientation;
@@ -245,20 +256,20 @@ PYBIND11_MODULE(interface, m) {
     m.def("parameters_from_json", &parameters_from_json, "Set parameters from json");
 
 #ifdef L2F_VECTOR
-    vector_factory<1>(m);
-    vector_factory<2>(m);
-    vector_factory<4>(m);
+    // vector_factory<1>(m);
+    // vector_factory<2>(m);
+    // vector_factory<4>(m);
     vector_factory<8>(m);
-    vector_factory<16>(m);
-    vector_factory<32>(m);
-    vector_factory<64>(m);
-    vector_factory<128>(m);
-    vector_factory<256>(m);
-    vector_factory<512>(m);
-    vector_factory<1024>(m);
-    vector_factory<2048>(m);
-    vector_factory<4096>(m);
-    vector_factory<8192>(m);
+    // vector_factory<16>(m);
+    // vector_factory<32>(m);
+    // vector_factory<64>(m);
+    // vector_factory<128>(m);
+    // vector_factory<256>(m);
+    // vector_factory<512>(m);
+    // vector_factory<1024>(m);
+    // vector_factory<2048>(m);
+    // vector_factory<4096>(m);
+    // vector_factory<8192>(m);
 #ifdef L2F_VECTOR_N_ENVIRONMENTS
     vector_factory<L2F_VECTOR_N_ENVIRONMENTS>(m);
 #endif

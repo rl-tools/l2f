@@ -1,4 +1,6 @@
 import l2f
+from l2f import vector1024 as vector
+
 import asyncio, websockets, json
 device = l2f.Device()
 rng = l2f.Rng()

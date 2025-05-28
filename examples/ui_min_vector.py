@@ -1,0 +1,39 @@
+import l2f
+from l2f import vector8 as vector
+from copy import copy
+
+import asyncio, websockets, json
+device = l2f.Device()
+rng = vector.VectorRng()
+env = vector.VectorEnvironment()
+ui = l2f.UI()
+params = vector.VectorParameters()
+state = vector.VectorState()
+next_state = vector.VectorState()
+vector.initialize_rng(device, rng, 0)
+vector.initialize_environment(device, env)
+vector.sample_initial_parameters(device, env, params, rng)
+vector.initial_state(device, env, params, state)
+async def main():
+    uri = "ws://localhost:13337/backend"
+    async with websockets.connect(uri) as websocket:
+        handshake = json.loads(await websocket.recv(uri))
+        assert(handshake["channel"] == "handshake")
+        namespace = handshake["data"]["namespace"]
+        ui.ns = namespace
+        ui_message = vector.set_ui_message(device, env, ui)
+        parameters_message = vector.set_parameters_message(device, env, params, ui)
+        await websocket.send(ui_message)
+        await websocket.send(parameters_message)
+        for _ in range(100):
+            action = [[1, 0, 0, 0] for _ in range(env.N_ENVIRONMENTS)]
+            dts = vector.step(device, env, params, state, action, next_state, rng)
+            state.assign(next_state)
+            ui_state = copy(state)
+            for i, s in enumerate(ui_state.states):
+                s.position[1] += i * 0.1
+            state_action_message = vector.set_state_action_message(device, env, params, ui, ui_state, action)
+            await websocket.send(state_action_message)
+            await asyncio.sleep(dts[-1])
+if __name__ == "__main__":
+    asyncio.run(main())

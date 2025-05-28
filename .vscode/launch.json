@@ -32,6 +32,14 @@
             "justMyCode": false,
         },
         {
+            "name": "Example: UI (min, vector)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "examples/ui_min_vector.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
             "name": "SB3 Wrapper",
             "type": "debugpy",
             "request": "launch",

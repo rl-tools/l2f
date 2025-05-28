@@ -3,7 +3,8 @@ from setuptools import setup, find_packages, Extension
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 from copy import copy
 
-debug = False
+# debug = False
+debug = True
 optimization = True
 
 
@@ -16,7 +17,7 @@ if optimization:
     compile_args['macos'] += ['-Ofast', '-march=native', '-mmacosx-version-min=10.14']
 if debug:
     compile_args['msvc'] += ['/Zi', '/Od', '/D_DEBUG']
-    compile_args['unix'] += ['-g', '-D_DEBUG']
+    compile_args['unix'] += ['-g', '-D_DEBUG', '-w', '-fmax-errors=1']
     compile_args['macos'] += ['-g', '-D_DEBUG']
 
 
