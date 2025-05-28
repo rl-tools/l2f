@@ -31,11 +31,6 @@ namespace vector{
         static constexpr TI N_ENVIRONMENTS = T_N_ENVIRONMENTS;
         alignas(L2F_CACHE_LINE_SIZE) std::array<ENVIRONMENT::State, N_ENVIRONMENTS> states;
     };
-    // template <TI T_N_ENVIRONMENTS>
-    // struct State{
-    //     static constexpr TI N_ENVIRONMENTS = T_N_ENVIRONMENTS;
-    //     alignas(L2F_CACHE_LINE_SIZE) std::array<ENVIRONMENT::State, N_ENVIRONMENTS> states;
-    // };
 
     template <TI N_ENVIRONMENTS>
     void initialize_rng(DEVICE &device, Rng<N_ENVIRONMENTS>& rng, TI seed){
