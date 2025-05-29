@@ -6,7 +6,7 @@
 namespace py = pybind11;
 #define L2F_VECTOR
 // DEBUG: only compile vector8 to speed up compilation
-#define DEBUG
+// #define DEBUG
 #ifdef L2F_VECTOR
 
 #include <pybind11/numpy.h>
