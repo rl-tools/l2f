@@ -3,8 +3,8 @@ from setuptools import setup, find_packages, Extension
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 from copy import copy
 
-# debug = False
-debug = True
+debug = False
+# debug = True
 optimization = True
 
 

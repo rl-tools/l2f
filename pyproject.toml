@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "l2f"
-version = "2.0.13"
+version = "2.0.14"
 authors = [
     {name = "Jonas Eschmann", email = "jonas.eschmann@gmail.com"}
 ]

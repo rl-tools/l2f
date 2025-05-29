@@ -161,8 +161,9 @@ PYBIND11_MODULE(interface, m) {
     vector_factory<1>(m);
     vector_factory<2>(m);
     vector_factory<4>(m);
-#endif
+#else
     vector_factory<8>(m);
+#endif
 #ifndef DEBUG
     vector_factory<8>(m);
     vector_factory<16>(m);
