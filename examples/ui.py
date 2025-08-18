@@ -28,15 +28,17 @@ initialize_rng(device, rng, 0)
 
 
 sample_initial_parameters(device, env, params, rng)
-params.dynamics.mass *= 0.1
-single_env_params_json = parameters_to_json(device, env, params)
-print(single_env_params_json)
-print(f"rotor_positions: {params.dynamics.rotor_positions}")
-print(f"rotor_thrust_coefficients: {params.dynamics.rotor_thrust_coefficients}")
-print(f"J: {params.dynamics.J}")
-print(f"J_inv: {params.dynamics.J_inv}") 
-print(f"motor_time_constant: {params.dynamics.motor_time_constant}")
-print(f"integration dt: {params.integration.dt}")
+params_json = parameters_to_json(device, env, params)
+params_json = json.loads(params_json)
+params_json["dynamics"]["mass"] *= 0.1
+parameters_from_json(device, env, json.dumps(params_json), params)
+print(f"rotor_positions: {params_json['dynamics']['rotor_positions']}")
+print(f"rotor_thrust_coefficients: {params_json['dynamics']['rotor_thrust_coefficients']}")
+print(f"J: {params_json['dynamics']['J']}")
+print(f"J_inv: {params_json['dynamics']['J_inv']}") 
+print(f"rotor_time_constants_rising: {params_json['dynamics']['rotor_time_constants_rising']}")
+print(f"rotor_time_constants_falling: {params_json['dynamics']['rotor_time_constants_falling']}")
+print(f"integration dt: {params_json['integration']['dt']}")
 # sample_initial_state(device, env, params, state, rng)
 initial_state(device, env, params, state)
 
