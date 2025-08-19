@@ -68,8 +68,10 @@ async def main():
         ui_message = json.dumps(ui_message)
         parameters_message = set_parameters_message(device, env, params, ui)
         parameters_message = json.loads(parameters_message)
-        parameters_message["data"]["model"] = "11f470c8206d4ca43bf3f7e1ba1d7acc456d3c34"
-        parameters_message["data"]["model_name"] = "x500"
+        parameters_message["data"]["ui"] = {
+            "model": "11f470c8206d4ca43bf3f7e1ba1d7acc456d3c34",
+            "name": "x500"
+        }
         parameters_message = json.dumps(parameters_message)
         await websocket.send(ui_message)
         await websocket.send(parameters_message)
