@@ -14,15 +14,15 @@ namespace env_builder{
         static constexpr REWARD_FUNCTION reward_function = {
                 false, // non-negative
                 00.10, // scale
-                01.00, // constant
+                01.10, // constant
                 00.00, // termination penalty
                 10.00, // position
                 02.50, // orientation
-                00.05, // linear_velocity
+                01.00, // linear_velocity
                 00.00, // angular_velocity
                 00.00, // linear_acceleration
                 00.00, // angular_acceleration
-                00.10, // action
+                02.00, // action
         };
 
         struct TRAJECTORY_OPTIONS{
@@ -60,7 +60,7 @@ namespace env_builder{
         static constexpr typename PARAMETERS_TYPE::MDP::Termination termination = {
             true,  // enable
             1,     // position
-            10,    // linear velocity
+            2,    // linear velocity
             35,    // angular velocity
             10000, // position integral
             50000, // orientation integral
