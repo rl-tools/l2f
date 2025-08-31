@@ -7,7 +7,7 @@ import asyncio
 import websockets
 import json
 import base64
-from foundation_model import QuadrotorPolicy
+from foundation_policy import QuadrotorPolicy
 
 policy = QuadrotorPolicy()
 

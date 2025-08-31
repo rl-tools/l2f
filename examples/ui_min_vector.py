@@ -3,7 +3,7 @@ import numpy as np
 import asyncio, websockets, json
 import l2f
 from l2f import vector8 as vector
-from foundation_model import QuadrotorPolicy
+from foundation_policy import QuadrotorPolicy
 
 policy = QuadrotorPolicy()
 device = l2f.Device()
