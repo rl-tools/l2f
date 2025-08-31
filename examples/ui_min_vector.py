@@ -20,7 +20,7 @@ vector.initialize_environment(device, env)
 vector.sample_initial_parameters(device, env, params, rng)
 vector.sample_initial_state(device, env, params, state, rng)
 
-def configure_3d_model(parameters):
+def configure_3d_model(parameters_message):
     parameters_message = json.loads(parameters_message)
     for d in parameters_message["data"]:
         d["ui"] = {
